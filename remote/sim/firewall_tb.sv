@@ -13,10 +13,11 @@ module firewall_tb;
 
   parameter ME = 48'h69_69_5A_06_54_91;
 
-  firewall uut(  .clk(clk_in),
+  firewall #(.N(2)) uut(  .clk(clk_in),
                 .rst(rst_in),
                 .axiid(axiid),
                 .axiiv(axiiv),
+                .my_mac(ME),
                 .axiov(axiov),
                 .axiod(axiod));
 
@@ -60,7 +61,7 @@ module firewall_tb;
     axiid = 2'b10;
     for (int i = 0; i < 8; i=i+1) begin
       #20;
-      $display("Expected axiov: 0, axiov: %b, axiod: %b", axiov, axiod);
+      $display("Expected axiov: 1, expected axiod: 10 axiov: %b, axiod: %b", axiov, axiod);
       
     end
     #20;    
@@ -161,7 +162,7 @@ module firewall_tb;
     axiid = 2'b10;
     for (int i = 0; i < 8; i=i+1) begin
       #20;
-      $display("Expected axiov: 0, axiov: %b, axiod: %b", axiov, axiod);      
+      $display("Expected axiov: 1, expected axiod: 10, axiov: %b, axiod: %b", axiov, axiod);      
     end
     #20;
     $display("Expected axiov: 1, expected axiod: 10, axiid: %b, axiov: %b, axiod: %b", axiid, axiov, axiod);

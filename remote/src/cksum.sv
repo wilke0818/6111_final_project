@@ -16,8 +16,6 @@ module cksum(
   logic check_valid_out;
   logic last_input;
   logic reset_now;
-  logic [7:0] count;
-//  logic one_later;
 
   crc32 check_sum(
     .clk(clk),
@@ -34,19 +32,15 @@ module cksum(
 
   always_ff @(posedge clk) begin
     if (rst) begin
-//      check_sum_out <= 0;
-//      check_valid_out <= 0;
       done <= 0;
       kill <= 0;
-      count <= 0;
       reset_now <= 0;
     end else begin
       if (axiiv) begin
-        //count <= count < 224 ? count + 1 : count;
         done <= 0;
         kill <= 0;
       end else begin
-        if (last_input) begin
+        if (last_input) begin //falling edge of axiiv
           done <= 1'b1;
           reset_now <= 1'b1;
           kill <= check_sum_out != ETHERNET_CHECK_SUM;

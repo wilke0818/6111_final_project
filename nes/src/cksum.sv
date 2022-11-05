@@ -4,7 +4,7 @@
 module cksum(
   input wire clk,
   input wire rst,
-  input wire [1:0] axiid,
+  input wire [3:0] axiid,
   input wire axiiv,
   output logic done,
   output logic kill
@@ -16,16 +16,14 @@ module cksum(
   logic check_valid_out;
   logic last_input;
   logic reset_now;
-  logic [7:0] count;
-//  logic one_later;
 
-  crc32 check_sum(
+  crc32_4bit check_sum(
     .clk(clk),
     .rst(rst || reset_now),
-    .axiiv(axiiv),
-    .axiid(axiid),
-    .axiov(check_valid_out),
-    .axiod(check_sum_out));
+    .crc_en(axiiv),
+    .data_in(axiid),
+    .crc_out_en(check_valid_out),
+    .crc_out(check_sum_out));
 
   always_ff @(posedge clk) begin
     if (~rst) last_input <= axiiv;
@@ -34,19 +32,15 @@ module cksum(
 
   always_ff @(posedge clk) begin
     if (rst) begin
-//      check_sum_out <= 0;
-//      check_valid_out <= 0;
       done <= 0;
       kill <= 0;
-      count <= 0;
       reset_now <= 0;
     end else begin
       if (axiiv) begin
-        //count <= count < 224 ? count + 1 : count;
         done <= 0;
         kill <= 0;
       end else begin
-        if (last_input) begin
+        if (last_input) begin //falling edge of axiiv
           done <= 1'b1;
           reset_now <= 1'b1;
           kill <= check_sum_out != ETHERNET_CHECK_SUM;

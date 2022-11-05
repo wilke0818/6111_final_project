@@ -18,6 +18,9 @@ module top_level(
 
   );
 
+  parameter N = $bits(eth_rxd);
+  parameter MY_MAC = 48'h37_38_38_38_38_38;
+
   /* have btnd control system reset */
   logic sys_rst;
   assign sys_rst = btnc;
@@ -26,16 +29,17 @@ module top_level(
   logic [13:0] count;
   logic old_done;
 
-  logic [1:0] ether_axiod, bitorder_axiod, firewall_axiod;
+  logic [N-1:0] ether_axiod, bitorder_axiod, firewall_axiod;
   logic [31:0] aggregate_axiod, valid_agg;
   logic kill, done, ether_axiov, bitorder_axiov, firewall_axiov, aggregate_axiov;
 
+  //TODO: make this a 25MHz clock when we move to a video board
   divider ether_clk(
     .clk(clk_100mhz),
     .ethclk(eth_refclk)
   );
 
-  ether ethermod(
+  ether #(.N(N)) ethermod(
     .clk(eth_refclk),
     .rst(sys_rst),
     .rxd(eth_rxd),
@@ -44,7 +48,7 @@ module top_level(
     .axiod(ether_axiod)
   );
 
-  bitorder bitmod(
+  bitorder #(.N(N)) bitmod(
     .clk(eth_refclk),
     .rst(sys_rst),
     .axiid(ether_axiod),
@@ -52,15 +56,16 @@ module top_level(
     .axiod(bitorder_axiod),
     .axiov(bitorder_axiov));
 
-  firewall firewallmod(
+  firewall #(.(N)) firewallmod(
     .clk(eth_refclk),
     .rst(sys_rst),
     .axiid(bitorder_axiod),
     .axiiv(bitorder_axiov),
+    .my_mac(MY_MAC),
     .axiod(firewall_axiod),
     .axiov(firewall_axiov));
 
-  cksum cksummod(
+  cksum #(.N(N)) cksummod(
     .clk(eth_refclk),
     .rst(sys_rst),
     .axiid(ether_axiod),
