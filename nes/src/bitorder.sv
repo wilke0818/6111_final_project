@@ -2,35 +2,41 @@
 `timescale 1ns / 1ps
 
 
-module bitorder(
+module bitorder #(parameter N=2)(
   input wire clk,
   input wire rst,
   input wire axiiv,
-  input wire [1:0] axiid,
+  input wire [N-1:0] axiid,
   output logic axiov,
-  output logic [1:0] axiod
+  output logic [N-1:0] axiod
 );
 
-  logic [1:0] count;
+  parameter COUNT_MAX = (8/N)-1;
+  parameter N_SHIFT = $clog2(N);
+  logic [$clog2(8/N)-1:0] count;
   logic [7:0] buffer1;
   logic [7:0] buffer2;
   logic select;
-  logic [1:0] out_count;
+  logic [$clog2(8/N)-1:0] out_count;
+//  logic [1:0] out_count;
 
   always_ff @(posedge clk) begin
     if (~rst) begin
-      if (count == 3 && axiiv) begin
+      if (count == COUNT_MAX && axiiv) begin
         axiov <= 1'b1;
-        out_count <= 2'd3;
+        out_count <= COUNT_MAX;
         axiod <= axiid;
       end else if (out_count > 0) begin
         axiov <= 1'b1;
         out_count <= out_count -1;
-        case (out_count)
-          2'b01 : axiod <= select ? buffer1[1:0] : buffer2[1:0];
-          2'b10 : axiod <= select ? buffer1[3:2] : buffer2[3:2];
-          2'b11 : axiod <= select ? buffer1[5:4] : buffer2[5:4];
-        endcase
+        for (int i = 0; i < COUNT_MAX; i = i + 1) begin
+          if (out_count == i+1) axiod <= select ? buffer1[2*i +: N] : buffer2[2*i +: N];
+        end
+//        case (out_count)
+//          2'b01 : axiod <= select ? buffer1[1:0] : buffer2[1:0];
+//          2'b10 : axiod <= select ? buffer1[3:2] : buffer2[3:2];
+//          2'b11 : axiod <= select ? buffer1[5:4] : buffer2[5:4];
+//        endcase
       end else begin
         axiov <= 1'b0;
       end
@@ -49,15 +55,17 @@ module bitorder(
     end else begin
       if (axiiv) begin
         if (~select) begin
-          buffer1[2*count+1] <= axiid[1];
-          buffer1[2*count] <= axiid[0];
+          for (int i = 0; i < N; i=i+1) begin
+            buffer1[N*count+i] <= axiid[i];
+          end
           count <= count + 1;
-          select <= count == 3 ? ~select : select;
+          select <= count == COUNT_MAX ? ~select : select;
         end else begin
-          buffer2[2*count+1] <= axiid[1];
-          buffer2[2*count] <= axiid[0];
+          for (int i = 0; i < N; i=i+1) begin
+            buffer2[N*count+i] <= axiid[i];
+          end
           count <= count + 1;
-          select <= count == 3 ? ~select : select;
+          select <= count == COUNT_MAX ? ~select : select;
         end
       end else begin
         count <= 0;
