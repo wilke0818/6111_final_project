@@ -12,7 +12,8 @@ module network_stack #(parameter N=2) (
   );
 
   logic ethernet_axiod;
-  logic rx_kill, rx_done, ethernet_axiov;
+  logic [N-1:0] ordered_eth_rxd;
+  logic rx_kill, rx_done, ethernet_axiov, ordered_eth_crsdv;
 
   ethernet_rx #(.N(N)) ethernet_in(
     .clk(clk),
@@ -26,15 +27,24 @@ module network_stack #(parameter N=2) (
     .rx_kill(rx_kill)
   );
 
-//  network_rx #(.N(N)) network_in(
-//    .clk(clk),
-//    .rst(rst),
-//    .ethertype(ethernet_axiod),
-//    .axiid(eth_rxd),
-//    .axiiv(ethernet_axiov && eth_crsdv),
-//    .axiod(),
-//    .axiov()
-//  );
+  bitorder #(.N(N)) bitmod( //Kinda redundant but helps encapsulate ethernet logic
+    .clk(clk),
+    .rst(rst),
+    .axiid(eth_rxd),
+    .axiiv(ethernet_axiov && eth_crsdv),
+    .axiod(ordered_eth_rxd),
+    .axiov(ordered_eth_crsdv));
+
+
+  network_rx #(.N(N)) network_in(
+    .clk(clk),
+    .rst(rst),
+    .ethertype(ethernet_axiod),
+    .axiid(ordered_eth_rxd),
+    .axiiv(ordered_eth_crsdv && eth_crsdv),
+    .axiod(),
+    .axiov()
+  );
 
 endmodule
 
