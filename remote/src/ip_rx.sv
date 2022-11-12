@@ -10,8 +10,20 @@ module internet_protocol_rx #(parameter N=2) (
     output logic axiov,
     output logic [N-1:0] axiod //Change later once we know what we want out of IP
   );
+  
+  logic [15:0] header_checksum
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+
+    end else begin
+      if (axiiv) begin
 
 
+      end
+    end
+
+  end
 
 endmodule
 

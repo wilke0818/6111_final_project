@@ -31,13 +31,14 @@ module bland_cksum #(parameter N=2) (
       sum <= 0;
       word <= 0;
       count <= 0;
+      reset_now <= 0;
     end else begin
       if (axiiv) begin
         if (count < MAX_COUNT -1) begin
           count <= count + 1;
           word[15-N*count -: N] <= axiid;
         end else if (count == MAX_COUNT-1) begin
-          if ({15'b0, axiid} + {1'b0,sum} + word > 17'b0_1111_1111_1111_1111) begin
+          if (axiid + sum + word > 17'b0_1111_1111_1111_1111) begin
             sum <= sum + axiid + word + 1'b1; //add the carry bit
           end else begin
             sum <= sum + axiid + word;

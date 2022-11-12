@@ -63,6 +63,7 @@ module bland_cksum_tb;
     #40;
     axiid4 = 4'h3;
     #40;
+
     axiid4 = 4'h0;
     #40;
     axiid4 = 4'h0;
@@ -77,6 +78,7 @@ module bland_cksum_tb;
     #40;
     axiid4 = 4'h0;
     #40;
+
     axiid4 = 4'h0;
     #40;
     axiid4 = 4'h4;
@@ -93,6 +95,7 @@ module bland_cksum_tb;
     #40;
     axiid4 = 4'ha;
     #40;
+
     axiid4 = 4'h8;
     #40;
     axiid4 = 4'h0;
@@ -123,8 +126,88 @@ module bland_cksum_tb;
     #40;
     axiiv4 = 0;
     $display("Expected axiod: 0xb861, actual axiod: %h", axiod4);
-    #40;
+    #80;
     axiiv4 = 1'b1;
+
+    axiid4 = 4'h4;
+    #40;
+    axiid4 = 4'h5;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h7;
+    #40;
+    axiid4 = 4'h3;
+    #40;
+
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h4;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h4;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h1;
+    #40;
+    axiid4 = 4'h1;
+    #40;
+    axiid4 = 4'hc;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'ha;
+    #40;
+    
+    axiid4 = 4'h8;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h1;
+    #40;
+
+    axiid4 = 4'hc;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'ha;
+    #40;
+    axiid4 = 4'h8;
+    #40;
+
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'h0;
+    #40;
+    axiid4 = 4'hc;
+    #40;
+    axiid4 = 4'h7;
+    #40;
+    
+
     axiid4 = 4'hb;
     #40;
     axiid4 = 4'h8;
@@ -134,7 +217,7 @@ module bland_cksum_tb;
     axiid4 = 4'h1;
     #40;
     axiiv4 = 0;
-    $display("Expected axiod: 0xffff, actual axiod: %h", axiod4);
+    $display("Expected axiod: 0x0000, actual axiod: %h", axiod4);
     $finish;
   end
 
