@@ -24,8 +24,6 @@ module ethernet_tx #(parameter N=2) (
   logic rst_cksum;
   logic old_axiov = 0;
 
-  logic axiov_ether_raw;
-  logic [N-1:0] axiod_ether_raw;
   logic axiiv_ether;
   logic [N-1:0] axiid_ether;
   logic axiov_ether;
@@ -41,6 +39,16 @@ module ethernet_tx #(parameter N=2) (
 
   logic [N-1:0] axiid_cksum;
   logic [7:0] cksum_count;
+  logic axiov_raw;
+  logic [N-1:0] axiod_raw;
+  logic axiov_flipped;
+  logic [N-1:0] axiod_flipped;
+
+  assign axiov = axiov_flipped;
+  assign axiod = axiod_flipped;
+
+  logic axii_cksum_header;
+  logic axii_cksum_data;
 
   // FIXME: Currently beings transmission as soon as axiiv is asserted
   //        May need to change to something like axi_last in the future
@@ -54,18 +62,18 @@ module ethernet_tx #(parameter N=2) (
     .my_mac(my_mac),
     .dest_mac(dest_mac),
     .etype(etype),
-    .axiov(axiov_ether_raw),
-    .axiod(axiod_ether_raw),
-    .axio_cksum(axii_cksum)
+    .axiov(axiov_ether),
+    .axiod(axiod_ether),
+    .axio_cksum(axii_cksum_header)
   );
 
   bitorder #(.N(N)) bitorder_m(
     .clk(clk),
     .rst(rst),
-    .axiiv(axiov_ether_raw),
-    .axiid(axiod_ether_raw),
-    .axiov(axiov_ether),
-    .axiod(axiod_ether)
+    .axiiv(axiov_raw),
+    .axiid(axiod_raw),
+    .axiov(axiov_flipped),
+    .axiod(axiod_flipped)
   );
 
   // TODO: DATA MODULE (NEED TO WAIT FOR IP MODULE TO BE WRITTEN)
@@ -75,7 +83,7 @@ module ethernet_tx #(parameter N=2) (
     crc32_4bit check_sum_4(
       .clk(clk),
       .rst(rst_cksum | rst),
-      .crc_en(axii_cksum),
+      .crc_en(axii_cksum_header | axii_cksum_data),
       .data_in(axiid_cksum),
       .crc_out_en(check_valid_out_4),
       .crc_out(check_sum_out_2)
@@ -85,7 +93,7 @@ module ethernet_tx #(parameter N=2) (
     crc32 check_sum_2(
       .clk(clk),
       .rst(rst_cksum | rst),
-      .axiiv(axii_cksum),
+      .axiiv(axii_cksum_header | axii_cksum_data),
       .axiid(axiid_cksum),
       .axiov(check_valid_out_2),
       .axiod(check_sum_out_2)
@@ -104,10 +112,11 @@ module ethernet_tx #(parameter N=2) (
   always_ff @(posedge clk) begin
     case (state)
       IDLE: begin
-        axiov <= 0;
-        axiod <= 0;
+        axiov_raw <= 0;
+        axiod_raw <= 0;
         rst_cksum <= 1;
         cksum_count <= 31;
+        axii_cksum_data <= 0;
         // axii_cksum <= 0;
         if (axiiv) begin
           axiiv_ether <= 1;
@@ -116,35 +125,39 @@ module ethernet_tx #(parameter N=2) (
       end
       SEND_HEADER: begin
         rst_cksum <= 0;
-        axiod <= axiod_ether;
+        axiod_raw <= axiod_ether;
         if (axiov_ether) begin
-          axiov <= 1;
+          axiov_raw <= 1;
         end
         old_axiov <= axiov_ether;
         if (old_axiov && ~axiov_ether) begin
           axiiv_ether <= 0;
           // axii_cksum <= 1;    // FIXME: REMOVE THIS ONCE DATA MODULE IS WRITTEN
-          state <= SEND_CRC;
+          axii_cksum_data <= 1;
+          axiod_data <= 2'b11;
+          state <= SEND_DATA;
         end
       end
       SEND_DATA: begin
-        axiod <= axiod_data;
+        axiod_raw <= axiod_data;
+        axiov_data <= 0;
         if (~axiov_data) begin
           axiiv_data <= 0;
           // axii_cksum <= 0;
+          axii_cksum_data <= 0;
           state <= SEND_CRC;
         end
       end
       SEND_CRC: begin
         if (N==2)begin
-          axiod <= check_sum_out_2[cksum_count -: 2];
+          axiod_raw <= check_sum_out_2[cksum_count -: 2];
           cksum_count <= cksum_count - 2;
         end else begin
-          axiod <= check_sum_out_4[cksum_count -: 4];
+          axiod_raw <= check_sum_out_4[cksum_count -: 4];
           cksum_count <= cksum_count - 4;
         end
         if (cksum_count == N-1) begin
-          axiov <= 0;
+          axiov_raw <= 0;
           state <= IDLE;
         end
       end
