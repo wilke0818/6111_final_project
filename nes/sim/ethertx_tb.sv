@@ -1,0 +1,62 @@
+`default_nettype none
+`timescale 1ns / 1ps
+
+
+module ethertx_tb;
+
+  /* logics for inputs and outputs */
+  logic clk_in;
+  logic rst_in;
+  logic [1:0] axiid;
+  logic axiiv;
+  logic [47:0] my_mac = 48'h12_34_56_78_90_AB;
+  logic [47:0] dest_mac = 48'hFE_DC_BA_98_76_54;
+  logic [15:0] etype = 16'h6789;
+  logic axiov;
+  logic [1:0] axiod;  /* be sure this is the right bit width! */
+
+  ethernet_tx #(.N(2)) uut(  
+              .clk(clk_in),
+              .rst(rst_in),
+              .axiid(axiid),
+              .axiiv(axiiv),
+              .my_mac(my_mac),
+              .dest_mac(dest_mac),
+              .etype(etype),
+              .axiov(axiov),
+              .axiod(axiod));
+
+  /* An always block in simulation **always** runs in the background.
+   * This is useful to simulate a clock for sequential testbenches:
+   *    - every 5ns, make clk be !clk
+   */
+  always begin
+    #10;
+    clk_in = !clk_in;
+  end
+
+  /* Make sure to initialize the clock as well! */
+  
+  initial begin
+    $display("Starting Sim"); //print nice message
+    $dumpfile("ethertx.vcd"); //file to store value change dump (vcd)
+    $dumpvars(0,ethertx_tb); //store everything at the current level and below
+    clk_in = 0;
+    rst_in = 0;
+    #20;
+    rst_in = 1;
+    #20;
+    rst_in = 0;
+    $display("Simple valid input");
+    #20;
+    axiiv <= 1;
+    #20;
+    axiiv <= 0;
+    #20000;
+
+    $display("Finishing Sim"); //print nice message
+    $finish;
+  end
+
+endmodule
+`default_nettype wire

@@ -2,7 +2,7 @@
 `default_nettype none
 
 
-module ethernet_tx #(parameter N=2) (
+module ether_tx #(parameter N=2) (
   input wire clk,             // clock @ 25 or 50 mhz
   input wire rst,             // btnc (used for reset)
   input wire [N-1:0] axiid,   // AXI Input Data
@@ -12,21 +12,21 @@ module ethernet_tx #(parameter N=2) (
   input wire [15:0] etype,    // Ethernet type
   output logic axiov,         // Transmitting valid data
   output logic [N-1:0] axiod, // Data being transmitted
-  output logic axio_cksum,    // Valid when checksum should be calculated
+  output logic axio_cksum    // Valid when checksum should be calculated
   );
 
   // NOTE: Transmits in MSB/MSB order, so must route through bitorder before sending
 
   parameter PRE_COUNT = (64/N)-1;
 
-  enum state = {IDLE, SEND_PREAMBLE, SEND_SFD, SEND_DEST_MAC, SEND_SRC_MAC, SEND_TYPE, SEND_DATA, SEND_CRC};
+  enum {IDLE, SEND_PREAMBLE, SEND_SFD, SEND_DEST_MAC, SEND_SRC_MAC, SEND_TYPE, SEND_DATA, SEND_CRC} state;
 
   //local variables
   logic [15:0] ethertype;
   logic [15:0] length;
   logic [15:0] crc;
 
-  logic [3:0] preamble_count;
+  logic [7:0] preamble_count;
   logic [1:0] sfd_count;
   logic [15:0] mac_count = 47;
   logic [15:0] type_count = 15;
@@ -41,6 +41,8 @@ module ethernet_tx #(parameter N=2) (
       type_count <= 15;
       state <= IDLE;
       axiov <= 0;
+      preamble_count <= 0;
+      sfd_count <= 0;
     end else begin
       case (state)
         IDLE: begin
@@ -58,7 +60,9 @@ module ethernet_tx #(parameter N=2) (
           end
           if (preamble_count == PRE_COUNT) begin
             state <= SEND_SFD;
+            preamble_count <= 0;
           end
+          preamble_count <= preamble_count + 1;
         end
 
         SEND_SFD: begin
@@ -76,23 +80,24 @@ module ethernet_tx #(parameter N=2) (
               axiod <= 4'b0101;
             end
             sfd_count <= sfd_count + 1;
+          end
 
-            if ((N==2) && sfd_count == 3) begin
-              state <= SEND_DEST_MAC;
-              axio_cksum <= 1;
-            end else if ((N==4) && sfd_count == 1) begin
-              state <= SEND_DEST_MAC;
-              axio_cksum <= 1;
-            end
+          if ((N==2) && sfd_count == 2'b11) begin
+            state <= SEND_DEST_MAC;
+            sfd_count <= 0;
+          end else if ((N==4) && sfd_count == 2'b01) begin
+            state <= SEND_DEST_MAC;
+            sfd_count <= 0;
           end
         end
 
         SEND_DEST_MAC: begin
+          axio_cksum <= 1;
           if (N==2)begin
-            axiod <= dest_mac[mac_count:mac_count-1];
+            axiod <= dest_mac[mac_count -: 2];
             mac_count <= mac_count - 2;
           end else begin
-            axiod <= dest_mac[mac_count:mac_count-3];
+            axiod <= dest_mac[mac_count -: 4];
             mac_count <= mac_count - 4;
           end
           if (N==2 && mac_count == 1) begin
@@ -106,10 +111,10 @@ module ethernet_tx #(parameter N=2) (
 
         SEND_SRC_MAC: begin
           if (N==2)begin
-            axiod <= my_mac[mac_count:mac_count-1];
+            axiod <= my_mac[mac_count -: 2];
             mac_count <= mac_count - 2;
           end else begin
-            axiod <= my_mac[mac_count:mac_count-3];
+            axiod <= my_mac[mac_count -: 4];
             mac_count <= mac_count - 4;
           end
           if (N==2 && mac_count == 1) begin
@@ -121,24 +126,21 @@ module ethernet_tx #(parameter N=2) (
 
         SEND_TYPE: begin
           if (N==2)begin
-            axiod <= etype[type_count:type_count-1];
+            axiod <= etype[type_count -: 2];
             type_count <= type_count - 2;
           end else begin
-            axiod <= etype[type_count:type_count-3];
+            axiod <= etype[type_count -: 4];
             type_count <= type_count - 4;
           end
           if (N==2 && type_count == 1) begin
-            state <= SEND_DATA;
+            axiov <= 0;
+            axio_cksum <= 0;
+            state <= IDLE;
           end else if (N==4 && type_count == 3) begin
-            state <= SEND_DATA;
+            axiov <= 0;
+            axio_cksum <= 0;
+            state <= IDLE;
           end
-        end
-        
-        SEND_DATA: begin
-          state <= SEND_CRC;
-        end
-        SEND_CRC: begin
-          state <= IDLE;
         end
       endcase
     end

@@ -11,17 +11,21 @@ module ethernet_tx #(parameter N=2) (
   input wire [47:0] dest_mac, // MAC address of destination device
   input wire [15:0] etype,    // Ethernet type
   output logic axiov,         // Transmitting valid data
-  output logic [N-1:0] axiod, // Data being transmitted
+  output logic [N-1:0] axiod // Data being transmitted
   );
 
   // NOTE: Transmits in MSB/MSB order, so must route through bitorder before sending
 
   parameter PRE_COUNT = (64/N)-1;
 
-  enum state = {IDLE, SEND_HEADER, SEND_DATA, SEND_CRC};
+  enum {IDLE, SEND_HEADER, SEND_DATA, SEND_CRC} state;
 
   logic axii_cksum;
+  logic rst_cksum;
+  logic old_axiov = 0;
 
+  logic axiov_ether_raw;
+  logic [N-1:0] axiod_ether_raw;
   logic axiiv_ether;
   logic [N-1:0] axiid_ether;
   logic axiov_ether;
@@ -30,6 +34,12 @@ module ethernet_tx #(parameter N=2) (
   logic axiov_data;
   logic [N-1:0] axiod_data;
 
+  logic check_valid_out_2;
+  logic [31:0] check_sum_out_2;
+  logic check_valid_out_4;
+  logic [31:0] check_sum_out_4;
+
+  logic [N-1:0] axiid_cksum;
   logic [7:0] cksum_count;
 
   // FIXME: Currently beings transmission as soon as axiiv is asserted
@@ -44,19 +54,29 @@ module ethernet_tx #(parameter N=2) (
     .my_mac(my_mac),
     .dest_mac(dest_mac),
     .etype(etype),
-    .axiov(axiov_ether),
-    .axiod(axiod_ether),
+    .axiov(axiov_ether_raw),
+    .axiod(axiod_ether_raw),
     .axio_cksum(axii_cksum)
+  );
+
+  bitorder #(.N(N)) bitorder_m(
+    .clk(clk),
+    .rst(rst),
+    .axiiv(axiov_ether_raw),
+    .axiid(axiod_ether_raw),
+    .axiov(axiov_ether),
+    .axiod(axiod_ether)
   );
 
   // TODO: DATA MODULE (NEED TO WAIT FOR IP MODULE TO BE WRITTEN)
 
+  // TODO: May need to feed checksum through bitorder as well
   if (N==4) begin
     crc32_4bit check_sum_4(
       .clk(clk),
-      .rst(rst),
+      .rst(rst_cksum | rst),
       .crc_en(axii_cksum),
-      .data_in(axiod_ether | axiod_data),
+      .data_in(axiid_cksum),
       .crc_out_en(check_valid_out_4),
       .crc_out(check_sum_out_2)
     );
@@ -64,12 +84,20 @@ module ethernet_tx #(parameter N=2) (
   end else begin
     crc32 check_sum_2(
       .clk(clk),
-      .rst(rst),
+      .rst(rst_cksum | rst),
       .axiiv(axii_cksum),
-      .axiid(axiod_ether | axiod_data),
+      .axiid(axiid_cksum),
       .axiov(check_valid_out_2),
       .axiod(check_sum_out_2)
     );
+  end
+
+  always_comb begin
+    if (state == SEND_HEADER)begin
+      axiid_cksum = axiod_ether;
+    end else if (state == SEND_DATA)begin
+      axiid_cksum = axiod_data;
+    end
   end
 
   // FIXME: May be best to turn axiod mux into a comb block
@@ -78,35 +106,44 @@ module ethernet_tx #(parameter N=2) (
       IDLE: begin
         axiov <= 0;
         axiod <= 0;
+        rst_cksum <= 1;
+        cksum_count <= 31;
+        // axii_cksum <= 0;
         if (axiiv) begin
           axiiv_ether <= 1;
           state <= SEND_HEADER;
         end
       end
       SEND_HEADER: begin
+        rst_cksum <= 0;
         axiod <= axiod_ether;
-        if (~axiov_ether) begin
+        if (axiov_ether) begin
+          axiov <= 1;
+        end
+        old_axiov <= axiov_ether;
+        if (old_axiov && ~axiov_ether) begin
           axiiv_ether <= 0;
-          state <= SEND_DATA;
+          // axii_cksum <= 1;    // FIXME: REMOVE THIS ONCE DATA MODULE IS WRITTEN
+          state <= SEND_CRC;
         end
       end
       SEND_DATA: begin
         axiod <= axiod_data;
         if (~axiov_data) begin
           axiiv_data <= 0;
-          axii_cksum <= 0;
+          // axii_cksum <= 0;
           state <= SEND_CRC;
         end
       end
       SEND_CRC: begin
         if (N==2)begin
-          axiod <= check_sum_out_2[cksum_count:cksum_count-1];
+          axiod <= check_sum_out_2[cksum_count -: 2];
           cksum_count <= cksum_count - 2;
         end else begin
-          axiod <= check_sum_out_4[cksum_count:cksum_count-3];
+          axiod <= check_sum_out_4[cksum_count -: 4];
           cksum_count <= cksum_count - 4;
         end
-        if (cksum_count == 0) begin
+        if (cksum_count == N-1) begin
           axiov <= 0;
           state <= IDLE;
         end
