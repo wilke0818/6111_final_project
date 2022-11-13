@@ -9,7 +9,7 @@ module ethernet_rx #(parameter N=2) (
   input wire axiiv,
   input wire [47:0] mac,
   output logic axiov, //use valid for IP
-  output logic axiod, //output ethertype
+  output logic ethertype, //output ethertype
   output logic rx_done,
   output logic rx_kill
   );
@@ -49,7 +49,7 @@ module ethernet_rx #(parameter N=2) (
     .axiid(firewall_axiod),
     .axiiv(firewall_axiov),
     .axiov(axiov),
-    .axiod(axiod)
+    .axiod(ethertype)
   );
 
   cksum cksummod(

@@ -21,7 +21,7 @@ module network_stack #(parameter N=2) (
     .axiid(eth_rxd),
     .axiiv(eth_crsdv),
     .mac(mac),
-    .axiod(ethernet_axiod),
+    .ethertype(ethernet_axiod),
     .axiov(ethernet_axiov),
     .rx_done(rx_done),
     .rx_kill(rx_kill)
