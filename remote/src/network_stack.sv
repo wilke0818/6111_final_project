@@ -11,9 +11,19 @@ module network_stack #(parameter N=2) (
   output logic [N-1:0] eth_txd
   );
 
+  parameter MY_IP = 32'h12_12_6b_0d;
+
   logic ethernet_axiod;
   logic [N-1:0] ordered_eth_rxd;
   logic rx_kill, rx_done, ethernet_axiov, ordered_eth_crsdv;
+
+
+  logic network_rx_axiov;
+  logic [7:0] network_rx_protocol;
+  logic [31:0] network_rx_src_ip, network_rx_dst_ip;
+  logic [15:0] network_packet_length;
+
+  logic transport_axiov;
 
   ethernet_rx #(.N(N)) ethernet_in(
     .clk(clk),
@@ -39,12 +49,28 @@ module network_stack #(parameter N=2) (
   network_rx #(.N(N)) network_in(
     .clk(clk),
     .rst(rst),
-    .ethertype(ethernet_axiod),
+    .ethertype_in(ethernet_axiod),
     .axiid(ordered_eth_rxd),
     .axiiv(ordered_eth_crsdv && eth_crsdv),
-    .axiod(),
-    .axiov()
+    .axiov(network_axiov),
+    .src_ip_out(network_rx_src_ip),
+    .dst_ip_out(network_rx_dst_ip),
+    .ip_protocol_out(network_rx_protocol),
+    .packet_length_out(packet_length)
   );
+
+  transport_rx #(.N(N)) transport_in(
+    .clk(clk),
+    .rst(rst),
+    .axiid(ordered_eth_rxd),
+    .axiiv(eth_crsdv && network_axiov && network_rx_dst_ip == MY_IP), //maybe remove last condition?
+    .protocol_in(network_rx_protocol),
+    .src_ip_in(network_rx_src_ip),
+    .dst_ip_in(network_rx_dst_ip),
+    .packet_length_in(network_packet_length-20),
+    .axiov(transport_axiov)
+  );
+  )
 
 endmodule
 
