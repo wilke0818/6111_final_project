@@ -89,7 +89,7 @@ module ethernet_tx #(parameter N=2) (
       .crc_en(axii_cksum_header | axii_cksum_data),
       .data_in(axiid_cksum),
       .crc_out_en(check_valid_out_4),
-      .crc_out(check_sum_out_2)
+      .crc_out(check_sum_out_4)
     );
     
   end else begin
@@ -134,8 +134,8 @@ module ethernet_tx #(parameter N=2) (
           axiov_raw <= 1;
         end
         old_axiov <= axiov_ether;
+        axiiv_ether <= 0;
         if (old_axiov && ~axiov_ether) begin
-          axiiv_ether <= 0;
           // axii_cksum <= 1;    // FIXME: REMOVE THIS ONCE DATA MODULE IS WRITTEN
           axii_cksum_data <= 1;
           axiov_data <= 1;
@@ -149,26 +149,32 @@ module ethernet_tx #(parameter N=2) (
         if (test_counter == 1)begin
           axiov_data <= 0;
           axii_cksum_data <= 0;
+          state <= SEND_CRC;
         end
         axiod_data <= TEST_BYTE[3:0];
+        axiiv_data <= 0;
         if (~axiov_data) begin
-          axiiv_data <= 0;
           // axii_cksum <= 0;
           axii_cksum_data <= 0;
           state <= SEND_CRC;
         end
       end
       SEND_CRC: begin
-        if (N==2)begin
-          axiod_raw <= check_sum_out_2[cksum_count -: 2];
-          cksum_count <= cksum_count - 2;
-        end else begin
-          axiod_raw <= check_sum_out_4[cksum_count -: 4];
-          cksum_count <= cksum_count - 4;
-        end
         if (cksum_count == N-1) begin
-          axiov_raw <= 0;
-          state <= IDLE;
+          test_counter <= test_counter -1;
+          if (test_counter == 0)begin
+            axiov_raw <= 0;
+            state <= IDLE;
+          end
+        end else begin
+          test_counter <= 1;
+          if (N==2)begin
+            axiod_raw <= check_sum_out_2[cksum_count -: 2];
+            cksum_count <= cksum_count - 2;
+          end else begin
+            axiod_raw <= check_sum_out_4[cksum_count -: 4];
+            cksum_count <= cksum_count - 4;
+          end
         end
       end
     endcase
