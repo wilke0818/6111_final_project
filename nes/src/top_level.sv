@@ -4,6 +4,7 @@
 module top_level(
   input wire clk_100mhz, //clock @ 100 mhz
   input wire btnc, //btnc (used for reset)
+  input wire btnr,
   output logic eth_rxck,
   output logic eth_txck, //should this be input?
   input wire [3:0] eth_rxd,
@@ -17,10 +18,14 @@ module top_level(
  // output logic ca,cb,cc,cd,ce,cf,cg
 
   );
-  assign eth_txctl = 0;
-  assign eth_txd = 0;
+  
+  
+  
+  // assign eth_txctl = 0;
+  // assign eth_txd = 0;
   parameter N = $bits(eth_rxd);
   parameter MY_MAC = 48'h37_38_38_38_38_38;
+  parameter DEST_MAC = 48'h11_22_33_44_55_66;
 
   /* have btnd control system reset */
   logic sys_rst;
@@ -38,7 +43,7 @@ module top_level(
     .ethclk(eth_rxck)
   );
 
-  network_stack #(.N(N)) (
+  network_stack #(.N(N)) network_m (
     .clk(eth_rxck),
     .rst(sys_rst),
     .eth_rxd(eth_rxd),
@@ -46,6 +51,19 @@ module top_level(
     .eth_crsdv(eth_rxctl),
     .eth_txen(eth_txctl),
     .mac(MY_MAC)
+  );
+  
+  // ETHERNET TEST
+  ethernet_tx #(.N(N)) ethernet_tx_m(
+  .clk(eth_txck),             // clock @ 25 or 50 mhz
+  .rst(sys_rst),             // btnc (used for reset)
+  .axiid(0),   // AXI Input Data
+  .axiiv(btnr),           // AXI Input Valid
+  .my_mac(MY_MAC),   // MAC address of this FPGA
+  .dest_mac(DEST_MAC), // MAC address of destination device
+  .etype(16'hF0F0),    // Ethernet type
+  .axiov(eth_txctl),         // Transmitting valid data
+  .axiod(eth_txd) // Data being transmitted
   );
 
 endmodule

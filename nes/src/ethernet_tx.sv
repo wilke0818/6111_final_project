@@ -134,13 +134,15 @@ module ethernet_tx #(parameter N=2) (
           axiiv_ether <= 0;
           // axii_cksum <= 1;    // FIXME: REMOVE THIS ONCE DATA MODULE IS WRITTEN
           axii_cksum_data <= 1;
-          axiod_data <= 2'b11;
+          axiov_data <= 1;
+          axiod_data <= 4'b1010;
           state <= SEND_DATA;
         end
       end
       SEND_DATA: begin
         axiod_raw <= axiod_data;
         axiov_data <= 0;
+        axii_cksum_data <= 0;
         if (~axiov_data) begin
           axiiv_data <= 0;
           // axii_cksum <= 0;
