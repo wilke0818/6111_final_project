@@ -17,6 +17,7 @@ module network_rx #(parameter N=2) (
   logic ip_axiiv, arp_axiiv, ip_axiov, arp_axiov;
   logic [N-1:0] ip_axiid, arp_axiid;
   logic [31:0] ip_src_ip, ip_dst_ip;
+  logic [15:0] ip_packet_length;
   
   assign src_ip_out = ~ethertype_in ? ip_src_ip : 0;
   assign dst_ip_out = ~ethertype_in ? ip_dst_ip : 0;
@@ -38,7 +39,7 @@ module network_rx #(parameter N=2) (
     .src_ip_out(ip_src_ip),
     .dst_ip_out(ip_dst_ip),
     .protocol_out(ip_protocol_out),
-    .packet_length_out(ip_packet_length);
+    .packet_length_out(ip_packet_length)
   );
 
   arp_rx #(.N(N)) arp_mod(

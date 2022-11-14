@@ -52,25 +52,25 @@ module network_stack #(parameter N=2) (
     .ethertype_in(ethernet_axiod),
     .axiid(ordered_eth_rxd),
     .axiiv(ordered_eth_crsdv && eth_crsdv),
-    .axiov(network_axiov),
+    .axiov(network_rx_axiov),
     .src_ip_out(network_rx_src_ip),
     .dst_ip_out(network_rx_dst_ip),
     .ip_protocol_out(network_rx_protocol),
-    .packet_length_out(packet_length)
+    .packet_length_out(network_packet_length)
   );
 
   transport_rx #(.N(N)) transport_in(
     .clk(clk),
     .rst(rst),
     .axiid(ordered_eth_rxd),
-    .axiiv(eth_crsdv && network_axiov && network_rx_dst_ip == MY_IP), //maybe remove last condition?
+    .axiiv(eth_crsdv && network_rx_axiov && network_rx_dst_ip == MY_IP), //maybe remove last condition?
     .protocol_in(network_rx_protocol),
     .src_ip_in(network_rx_src_ip),
     .dst_ip_in(network_rx_dst_ip),
     .packet_length_in(network_packet_length-20),
     .axiov(transport_axiov)
   );
-  )
+ 
 
 endmodule
 
