@@ -46,6 +46,13 @@ module ether_tx #(parameter N=2) (
     end else begin
       case (state)
         IDLE: begin
+          axio_cksum <= 0;
+          mac_count <= 47;
+          type_count <= 15;
+          state <= IDLE;
+          axiov <= 0;
+          preamble_count <= 0;
+          sfd_count <= 0;
           if (axiiv) begin
             state <= SEND_PREAMBLE;
           end

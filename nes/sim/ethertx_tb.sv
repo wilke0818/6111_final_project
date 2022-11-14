@@ -42,6 +42,7 @@ module ethertx_tb;
     $dumpfile("ethertx.vcd"); //file to store value change dump (vcd)
     $dumpvars(0,ethertx_tb); //store everything at the current level and below
     clk_in = 0;
+    axiiv = 0;
     rst_in = 0;
     #20;
     rst_in = 1;
@@ -50,9 +51,13 @@ module ethertx_tb;
     $display("Simple valid input");
     #20;
     axiiv <= 1;
-    #20;
+    #1900;
     axiiv <= 0;
-    #20000;
+    #200;
+    axiiv <= 1;
+    #1900;
+    axiiv <= 0;
+    #200;
 
     $display("Finishing Sim"); //print nice message
     $finish;

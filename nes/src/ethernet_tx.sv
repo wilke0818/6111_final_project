@@ -23,6 +23,7 @@ module ethernet_tx #(parameter N=2) (
   logic axii_cksum;
   logic rst_cksum;
   logic old_axiov = 0;
+  logic old_axiiv = 0;
 
   logic axiiv_ether;
   logic [N-1:0] axiid_ether;
@@ -115,6 +116,7 @@ module ethernet_tx #(parameter N=2) (
   always_ff @(posedge clk) begin
     case (state)
       IDLE: begin
+        old_axiiv <= axiiv;
         axiov_raw <= 0;
         axiod_raw <= 0;
         rst_cksum <= 1;
@@ -122,7 +124,7 @@ module ethernet_tx #(parameter N=2) (
         test_counter <= 0;
         axii_cksum_data <= 0;
         // axii_cksum <= 0;
-        if (axiiv) begin
+        if (~old_axiiv && axiiv) begin
           axiiv_ether <= 1;
           state <= SEND_HEADER;
         end
