@@ -50,6 +50,9 @@ module ethernet_tx #(parameter N=2) (
   logic axii_cksum_header;
   logic axii_cksum_data;
 
+  logic [3:0] test_counter;
+  parameter TEST_BYTE = 8'b1011_1010;
+
   // FIXME: Currently beings transmission as soon as axiiv is asserted
   //        May need to change to something like axi_last in the future
 
@@ -116,6 +119,7 @@ module ethernet_tx #(parameter N=2) (
         axiod_raw <= 0;
         rst_cksum <= 1;
         cksum_count <= 31;
+        test_counter <= 0;
         axii_cksum_data <= 0;
         // axii_cksum <= 0;
         if (axiiv) begin
@@ -135,14 +139,18 @@ module ethernet_tx #(parameter N=2) (
           // axii_cksum <= 1;    // FIXME: REMOVE THIS ONCE DATA MODULE IS WRITTEN
           axii_cksum_data <= 1;
           axiov_data <= 1;
-          axiod_data <= 4'b1010;
+          axiod_data <= TEST_BYTE[7:4];
           state <= SEND_DATA;
         end
       end
       SEND_DATA: begin
         axiod_raw <= axiod_data;
-        axiov_data <= 0;
-        axii_cksum_data <= 0;
+        test_counter <= 1;
+        if (test_counter == 1)begin
+          axiov_data <= 0;
+          axii_cksum_data <= 0;
+        end
+        axiod_data <= TEST_BYTE[3:0];
         if (~axiov_data) begin
           axiiv_data <= 0;
           // axii_cksum <= 0;
