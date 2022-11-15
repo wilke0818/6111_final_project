@@ -140,12 +140,12 @@ module ether_tx #(parameter N=2) (
             type_count <= type_count - 4;
           end
           if (N==2 && type_count == 1) begin
-            axiov <= 0;
-            axio_cksum <= 0;
+            // axiov <= 0;
+            // axio_cksum <= 0;
             state <= IDLE;
           end else if (N==4 && type_count == 3) begin
-            axiov <= 0;
-            axio_cksum <= 0;
+            // axiov <= 0;
+            // axio_cksum <= 0;
             state <= IDLE;
           end
         end
