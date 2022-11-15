@@ -56,6 +56,10 @@ module ethernet_tx #(parameter N=2) (
 
   // FIXME: Currently beings transmission as soon as axiiv is asserted
   //        May need to change to something like axi_last in the future
+  
+  ila i(.clk(clk),
+        .probe0(axiov),
+        .probe1(axiod));
 
 
   ether_tx #(.N(N)) ether_tx_m(
@@ -147,14 +151,12 @@ module ethernet_tx #(parameter N=2) (
       end
       SEND_DATA: begin
         axiod_raw <= axiod_data;
-        test_counter <= 1;
-        if (test_counter == 1)begin
+        test_counter <= test_counter + 1;
+        if (test_counter >= 32)begin
           axiov_data <= 0;
           axii_cksum_data <= 0;
           state <= SEND_CRC;
         end
-        axiod_data <= TEST_BYTE[3:0];
-        axiiv_data <= 0;
         if (~axiov_data) begin
           // axii_cksum <= 0;
           axii_cksum_data <= 0;
