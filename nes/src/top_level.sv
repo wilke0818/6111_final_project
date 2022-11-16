@@ -25,7 +25,7 @@ module top_level(
   // assign eth_txd = 0;
   parameter N = $bits(eth_rxd);
   parameter MY_MAC = 48'h37_38_38_38_38_38;
-  parameter DEST_MAC = 48'h11_22_33_44_55_66;
+  parameter DEST_MAC = 48'hFF_FF_FF_FF_FF_FF;
 
   /* have btnd control system reset */
   logic sys_rst;

@@ -131,14 +131,14 @@ module ethernet_tx #(parameter N=2) (
     end
   end
 
-  always_comb begin
-    if ((state == SEND_HEADER) && old_axiov && ~axiov_ether)begin
-      axii_cksum_data = 1;
-      state = SEND_DATA;
-      axiov_data = 1;
-      axiod_data = TEST_BYTE[7:4];
-    end
-  end
+  // always_comb begin
+  //      if ((state == SEND_HEADER) && old_axiov && ~axiov_ether)begin
+  //     axii_cksum_data = 1;
+  //     state = SEND_DATA;
+  //     axiov_data = 1;
+  //     axiod_data = TEST_BYTE[7:4];
+    //end
+  // end
 
   // FIXME: May be best to turn axiod mux into a comb block
   always_ff @(posedge clk) begin
@@ -168,7 +168,7 @@ module ethernet_tx #(parameter N=2) (
         axiiv_ether <= 0;
         if (old_axiov && ~axiov_ether) begin
           // axii_cksum <= 1;    // FIXME: REMOVE THIS ONCE DATA MODULE IS WRITTEN
-          // axii_cksum_data <= 1;
+          axii_cksum_data <= 1;
           axiov_data <= 1;
           axiod_data <= TEST_BYTE[7:4];
           state <= SEND_DATA;

@@ -65,7 +65,7 @@ module ether_tx #(parameter N=2) (
           end else begin
             axiod <= 4'b0101;
           end
-          if (preamble_count == PRE_COUNT) begin
+          if (preamble_count == PRE_COUNT-1) begin
             state <= SEND_SFD;
             preamble_count <= 0;
           end
@@ -140,11 +140,11 @@ module ether_tx #(parameter N=2) (
             type_count <= type_count - 4;
           end
           if (N==2 && type_count == 1) begin
-            // axiov <= 0;
+            axiov <= 0;
             // axio_cksum <= 0;
             state <= IDLE;
           end else if (N==4 && type_count == 3) begin
-            // axiov <= 0;
+            axiov <= 0;
             // axio_cksum <= 0;
             state <= IDLE;
           end
