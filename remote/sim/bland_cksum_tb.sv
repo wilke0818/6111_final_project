@@ -14,12 +14,16 @@ module bland_cksum_tb;
 //  logic [1:0] axiod;  /* be sure this is the right bit width! */
   logic [3:0] axiid4;
   logic [15:0] axiod4;
+  logic init_valid;
+  logic [15:0] init_data;
 
   bland_cksum #(.N(4)) uut4
                (.clk(clk_in),
                 .rst(rst_in),
                 .axiid(axiid4),
                 .axiiv(axiiv4),
+                .init_valid(init_valid),
+                .init_data(init_data),
                 .axiov(axiov4),
                 .axiod(axiod4));
 
@@ -41,6 +45,8 @@ module bland_cksum_tb;
  //   axiiv = 0;
     axiid4 = 0;
     axiiv4 = 0;
+    init_data = 0;
+    init_valid = 0;
     #40;
     rst_in = 1;
     #40;
@@ -218,6 +224,20 @@ module bland_cksum_tb;
     #40;
     axiiv4 = 0;
     $display("Expected axiod: 0x0000, actual axiod: %h", axiod4);
+
+    axiiv4 = 1;
+    axiid4 = 4'hb;
+    init_valid = 1;
+    init_data = 16'h0001;
+    #40;
+    axiid4 = 4'h8;
+    #40;
+    axiid4 = 4'h6;
+    #40;
+    axiid4 = 4'h1;
+    #40;
+    axiiv4 = 0;
+    $display("Expected axiod: 0x479d, actual axiod: %h", axiod4);
     $finish;
   end
 

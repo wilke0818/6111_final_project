@@ -23,7 +23,7 @@ module network_stack #(parameter N=2) (
   logic [31:0] network_rx_src_ip, network_rx_dst_ip;
   logic [15:0] network_packet_length;
 
-  logic transport_axiov;
+  logic transport_axiov, udp_kill;
 
   ethernet_rx #(.N(N)) ethernet_in(
     .clk(clk),
@@ -68,7 +68,8 @@ module network_stack #(parameter N=2) (
     .src_ip_in(network_rx_src_ip),
     .dst_ip_in(network_rx_dst_ip),
     .packet_length_in(network_packet_length-20),
-    .axiov(transport_axiov)
+    .axiov(transport_axiov),
+    .udp_kill(udp_kill)
   );
  
 

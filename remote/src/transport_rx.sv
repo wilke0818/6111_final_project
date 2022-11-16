@@ -12,7 +12,8 @@ module transport_rx #(parameter N=2) (
   input wire [31:0] src_ip_in,
   input wire [31:0] dst_ip_in,
   input wire [15:0] packet_length_in,
-  output logic axiov
+  output logic axiov,
+  output logic udp_kill
   );
 
   logic udp_axiiv, udp_axiov;
@@ -31,7 +32,8 @@ module transport_rx #(parameter N=2) (
     .src_ip_in(src_ip_in),
     .dst_ip_in(dst_ip_in),
     .packet_length_in(packet_length_in),
-    .axiov(udp_axiov)
+    .axiov(udp_axiov),
+    .kill(udp_kill)
   );
 
 endmodule;
