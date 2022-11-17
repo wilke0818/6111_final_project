@@ -119,6 +119,7 @@ module ethernet_tx #(parameter N=2) (
     end
     if (state == IDLE)begin
       axiod_raw = 0;
+      axiid_cksum = 0;
     end else if (state == SEND_HEADER)begin
       axiid_cksum = axiod_ether;
       axiod_raw = axiod_ether;
@@ -126,6 +127,8 @@ module ethernet_tx #(parameter N=2) (
       axiid_cksum = axiod_data;
       axiod_raw = axiod_data;
     end else if (state == SEND_CRC)begin
+      axiod_raw = 0;
+      axiid_cksum = 0;
       axiov_crc = 1;
       if (N==2)begin
         axiod_crc = check_sum_out_2[cksum_count -: 2];
@@ -134,6 +137,9 @@ module ethernet_tx #(parameter N=2) (
       end
       axiov = axiov_crc;
       axiod = axiod_crc;
+    end else begin
+      axiod_raw = 0;
+      axiid_cksum = 0;
     end
   end
 

@@ -10,8 +10,8 @@ module ethertx_tb;
   logic [3:0] axiid;
   logic axiiv;
   logic [47:0] my_mac = 48'h12_34_56_78_90_AB;
-  logic [47:0] dest_mac = 48'hFE_DC_BA_98_76_54;
-  logic [15:0] etype = 16'h6789;
+  logic [47:0] dest_mac = 48'hFF_FF_FF_FF_FF_FF;
+  logic [15:0] etype = 16'hF0F0;
   logic axiov;
   logic [3:0] axiod;  /* be sure this is the right bit width! */
 
