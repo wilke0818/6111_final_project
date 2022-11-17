@@ -183,9 +183,9 @@ module ethernet_tx #(parameter N=2) (
       SEND_DATA: begin
         // axiod_raw <= axiod_data;
         test_counter <= test_counter + 1;
-        if (test_counter == 31)
+        if (test_counter == 30)
           axiod_data <= 4'b0011;
-        if (test_counter == 32)begin
+        if (test_counter == 31)begin
           // axiod_data <= TEST_BYTE[3:0];
           // axiov_raw <= 0;
           axiov_data <= 0;
