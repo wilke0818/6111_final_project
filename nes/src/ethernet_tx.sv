@@ -47,8 +47,8 @@ module ethernet_tx #(parameter N=2) (
   logic [N-1:0] axiod_crc;
   logic axiov_crc;
 
-  assign axiov = axiov_flipped;
-  assign axiod = axiod_flipped;
+  // assign axiov = axiov_flipped;
+  // assign axiod = axiod_flipped;
 
   logic axii_cksum_header;
   logic axii_cksum_data;
@@ -90,7 +90,7 @@ module ethernet_tx #(parameter N=2) (
 
   // TODO: DATA MODULE (NEED TO WAIT FOR IP MODULE TO BE WRITTEN)
 
-  // TODO: May need to feed checksum through bitorder as well
+  // TODO: DO NOT need to feed checksum through bitorder as well
   if (N==4) begin
     crc32_4bit check_sum_4(
       .clk(clk),
@@ -113,6 +113,10 @@ module ethernet_tx #(parameter N=2) (
   end
 
   always_comb begin
+    if (state != SEND_CRC)begin
+      axiov = axiov_flipped;
+      axiod = axiod_flipped;
+    end
     if (state == IDLE)begin
       axiod_raw = 0;
     end else if (state == SEND_HEADER)begin
@@ -122,12 +126,14 @@ module ethernet_tx #(parameter N=2) (
       axiid_cksum = axiod_data;
       axiod_raw = axiod_data;
     end else if (state == SEND_CRC)begin
+      axiov_crc = 1;
       if (N==2)begin
         axiod_crc = check_sum_out_2[cksum_count -: 2];
       end else begin
         axiod_crc = check_sum_out_4[cksum_count -: 4];
       end
-      axiod_raw = axiod_crc;
+      axiov = axiov_crc;
+      axiod = axiod_crc;
     end
   end
 
@@ -177,22 +183,30 @@ module ethernet_tx #(parameter N=2) (
       SEND_DATA: begin
         // axiod_raw <= axiod_data;
         test_counter <= test_counter + 1;
-        if (test_counter >= 32)begin
-          axiod_data <= TEST_BYTE[3:0];
+        if (test_counter == 31)
+          axiod_data <= 4'b0011;
+        if (test_counter == 32)begin
+          // axiod_data <= TEST_BYTE[3:0];
+          // axiov_raw <= 0;
           axiov_data <= 0;
           axii_cksum_data <= 0;
           cksum_count <= 31;
-          state <= SEND_CRC;
+          test_counter <= 33;
+          // state <= SEND_CRC;
         end
         if (~axiov_data) begin
-          axii_cksum_data <= 0;
-          state <= SEND_CRC;
+          test_counter <= test_counter + 1;
+          if (test_counter == 34)begin
+            axiov_raw <= 0;
+            axii_cksum_data <= 0;
+            state <= SEND_CRC; 
+          end
         end
       end
       SEND_CRC: begin
         if (cksum_count != 0) begin
-          test_counter <= 1;
-          cksum_count = cksum_count - N;
+            test_counter <= 1;
+            cksum_count = cksum_count - N;
         end
         if (cksum_count == N-1) begin
           test_counter <= test_counter -1;
