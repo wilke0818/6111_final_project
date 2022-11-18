@@ -59,11 +59,14 @@ module ethernet_tx #(parameter N=2) (
   // FIXME: Currently beings transmission as soon as axiiv is asserted
   //        May need to change to something like axi_last in the future
   
-  /* 
-  ila i(.clk(clk),
+  
+  
+  ila_0 i(.clk(clk),
         .probe0(axiov),
-        .probe1(axiod));
-      */
+        .probe1(axiod)
+        );
+
+      
 
 
   ether_tx #(.N(N)) ether_tx_m(
@@ -129,14 +132,18 @@ module ethernet_tx #(parameter N=2) (
     end else if (state == SEND_CRC)begin
       axiod_raw = 0;
       axiid_cksum = 0;
-      axiov_crc = 1;
+      if (test_counter <= 1)begin
+          axiov_crc = 0;
+          end else begin
+          axiov_crc = 1;
+          end
       if (N==2)begin
         axiod_crc = check_sum_out_2[cksum_count -: 2];
       end else begin
         axiod_crc = check_sum_out_4[cksum_count -: 4];
       end
       axiov = axiov_crc;
-      axiod = axiod_crc;
+      axiod = axiod_crc;//{axiod_crc[1:0], axiod_crc[3:2]};
     end else begin
       axiod_raw = 0;
       axiid_cksum = 0;
@@ -182,7 +189,7 @@ module ethernet_tx #(parameter N=2) (
           // axii_cksum <= 1;    // FIXME: REMOVE THIS ONCE DATA MODULE IS WRITTEN
           axii_cksum_data <= 1;
           axiov_data <= 1;
-          axiod_data <= TEST_BYTE[7:4];
+          axiod_data <= TEST_BYTE[7:6];
           state <= SEND_DATA;
         end
       end
@@ -190,7 +197,7 @@ module ethernet_tx #(parameter N=2) (
         // axiod_raw <= axiod_data;
         test_counter <= test_counter + 1;
         if (test_counter == 30)
-          axiod_data <= 4'b0011;
+          axiod_data <= 2'b10;
         if (test_counter == 31)begin
           // axiod_data <= TEST_BYTE[3:0];
           // axiov_raw <= 0;
@@ -211,14 +218,19 @@ module ethernet_tx #(parameter N=2) (
       end
       SEND_CRC: begin
         if (cksum_count != 0) begin
-            test_counter <= 1;
-            cksum_count = cksum_count - N;
+            test_counter <= 2;
+            cksum_count <= cksum_count - N;
         end
         if (cksum_count == N-1) begin
-          test_counter <= test_counter -1;
+          test_counter <= 1;
+          cksum_count <= 0;
+        end
+        if (test_counter == 1)begin
+            test_counter <= 0;
+            // axiov_crc <= 0;
         end
         if (test_counter == 0)begin
-          axiov_crc <= 0;
+          // axiov_crc <= 0;
           state <= IDLE;
         end
       end
