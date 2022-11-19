@@ -67,8 +67,6 @@ module bitorder #(parameter N=2)(
           count <= count + 1;
           select <= count == COUNT_MAX ? ~select : select;
         end
-      end else begin
-        count <= 0;
       end
     end
   end

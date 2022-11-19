@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ns / 1ps
 
-module cksum(
+module cksum4bit(
   input wire clk,
   input wire rst,
   input wire [3:0] axiid,

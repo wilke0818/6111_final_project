@@ -19,11 +19,11 @@ module ethertype #(parameter N=2) (
   logic [15:0] ethertype;
 
   always_comb begin
-    if (count == COUNT_TOTAL) begin
-      if (ethertype == 16'h0800) begin //IPv4
+    if (count == COUNT_TOTAL-1) begin
+      if ({ethertype[15:N],axiid} == 16'h0800) begin //IPv4
         axiod = 1'b0;
         axiov = 1'b1;
-      end else if (ethertype == 16'h0806) begin //ARP
+      end else if ({ethertype[15:N],axiid} == 16'h0806) begin //ARP
         axiod = 1'b1;
         axiov = 1'b1;
       end
