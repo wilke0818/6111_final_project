@@ -65,7 +65,11 @@ module ether_tx #(parameter N=2) (
           end else begin
             axiod <= 4'b0101;
           end
-          if (preamble_count == PRE_COUNT-1) begin
+          if (N==2 && preamble_count == 28)begin
+            state <= SEND_SFD;
+            preamble_count <= 0;
+          end
+          else if (preamble_count == PRE_COUNT-1) begin
             state <= SEND_SFD;
             preamble_count <= 0;
           end

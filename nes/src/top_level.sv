@@ -83,7 +83,7 @@ module top_level(
   .axiiv(btnr),           // AXI Input Valid
   .my_mac(MY_MAC),   // MAC address of this FPGA
   .dest_mac(DEST_MAC), // MAC address of destination device
-  .etype(16'hF0F0),    // Ethernet type
+  .etype(16'h0800),    // Ethernet type
   .axiov(eth_txen),         // Transmitting valid data
   .axiod(eth_txd) // Data being transmitted
   );

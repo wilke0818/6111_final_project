@@ -1,0 +1,2 @@
+sim/crc32_4bit_tb.sv
+src/crc32_4bit.sv

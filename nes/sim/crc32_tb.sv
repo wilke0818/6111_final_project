@@ -30,18 +30,18 @@ module crc32sim;
 	logic clk;
 	logic rst;
 	logic axiiv;
-	logic [3:0] axiid;
+	logic [1:0] axiid;
 	logic axiov;
 	logic [31:0] axiod;
 
-	logic [63:0] msg;
+	logic [0:63] msg;
 	logic [0:31] rcrc;
 	logic testok;
 
 	integer i;
 
-	crc32_4bit uut(.clk(clk), .rst(rst), .crc_en(axiiv), .data_in(axiid),
-		  .crc_out_en(axiov), .crc_out(axiod));
+	crc32 uut(.clk(clk), .rst(rst), .axiiv(axiiv), .axiid(axiid),
+		  .axiov(axiov), .axiod(axiod));
 
 	initial begin: CLK
 		clk = 1;
@@ -50,7 +50,7 @@ module crc32sim;
 
 	initial begin: MAIN
 
-		$dumpfile("obj/crc32-bzip2-dp2.vcd");
+		$dumpfile("obj/crc32-bzip2-dp.vcd");
 		$dumpvars(0, crc32sim);
 
 
@@ -68,14 +68,12 @@ module crc32sim;
 
 		$display("== test one: correct CRC generation ==");
 
-		for (i = 64; i > 0; i = i - 8) begin
+		for (i = 0; i < 64; i = i + 2) begin
 			axiiv = 1;
-			axiid = {msg[i-5], msg[i-6], msg[i-7], msg[i-8]};
+			axiid = {msg[i+1], msg[i]};
 
 			if (!axiov) testok = 0;
 			#`CP;
-                        axiid = {msg[i-1], msg[i-2], msg[i-3], msg[i-4]};
-                        #`CP;
 		end
 
 		axiid = 0;
@@ -103,9 +101,9 @@ module crc32sim;
 
 		$display("== test two: correct residue generation ==");
 
-		for (i = 0; i < 64; i = i + 4) begin
+		for (i = 0; i < 64; i = i + 2) begin
 			axiiv = 1;
-			axiid = {msg[i], msg[i+1], msg[i+2], msg[i+3]};
+			axiid = {msg[i+1], msg[i]};
 
 			if (!axiov) testok = 0;
 			#`CP;
@@ -113,9 +111,9 @@ module crc32sim;
 		
 		rcrc = axiod;
 
-		for (i = 0; i < 32; i = i + 4) begin
+		for (i = 0; i < 32; i = i + 2) begin
 			axiiv = 1;
-			axiid = {rcrc[i], rcrc[i+1], rcrc[i+2], rcrc[i+3]};
+			axiid = {rcrc[i+1], rcrc[i]};
 
 			if (!axiov) testok = 0;
 			#`CP;
