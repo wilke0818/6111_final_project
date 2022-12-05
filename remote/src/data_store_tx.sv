@@ -10,7 +10,8 @@ module data_store_tx #(parameter N=2, parameter DATA_SIZE=16) (
   output logic axiov,
   output logic [N-1:0] axiod,
   output logic [15:0] data_cksum,
-  output logic [15:0] data_length //will be in bytes
+  output logic [15:0] data_length, //will be in bytes
+  output logic axi_last
 );
 
   parameter CKSUM_COUNT_MAX  = 48/DATA_SIZE;
@@ -76,10 +77,18 @@ module data_store_tx #(parameter N=2, parameter DATA_SIZE=16) (
           word[47-cksum_count*DATA_SIZE -: DATA_SIZE] <= axiid;
         end else begin
           word <= 48'b0;
-          if (sum + word[47:32] + word[31:16] + word[15 -: 16-DATA_SIZE] + axiid > 17'h0_ffff) begin
-            sum <= sum + word[47:32] + word[31:16] + {word[15 -: 16-DATA_SIZE], axiid} + 1'b1;
+          if (DATA_SIZE < 16) begin
+            if (sum + word[47:32] + word[31:16] + word[15 -: 16-DATA_SIZE] + axiid > 17'h0_ffff) begin
+              sum <= sum + word[47:32] + word[31:16] + {word[15 -: 16-DATA_SIZE], axiid} + 1'b1;
+            end else begin
+              sum <= sum + word[47:32] + word[31:16] + {word[15 -: 16-DATA_SIZE], axiid};
+            end
           end else begin
-            sum <= sum + word[47:32] + word[31:16] + {word[15 -: 16-DATA_SIZE], axiid};
+            if (sum + word[47:32] + word[31:16] + axiid > 17'h0_ffff) begin
+              sum <= sum + word[47:32] + word[31:16] + axiid + 1'b1;
+            end else begin
+              sum <= sum + word[47:32] + word[31:16] + axiid;
+            end
           end
           cksum_count <= 0;
         end
@@ -94,23 +103,32 @@ module data_store_tx #(parameter N=2, parameter DATA_SIZE=16) (
       axiov <= 0;
       read_count <= 0;
       cycle_delay_start <= 0;
+      axi_last <= 0;
     end else begin
       if (read_request && read_idx <= write_idx) begin
-         
+//        if (read_idx == write_idx) begin
+  //        axi_last <= 1'b1;
+    //    end
         if (cycle_delay_start == 0) begin
           axiov <= 1'b1;
           cycle_delay_start <= 1'b1;
-        end else if (read_count < DATA_SIZE/N - 2) begin
+        end else if (read_count + 3 < DATA_SIZE/N) begin
+          read_count <= read_count + 1;
+        end else if (read_count + 2 < DATA_SIZE/N) begin
           read_count <= read_count + 1;
           read_idx <= read_idx + 1;
-        end else if (read_count < DATA_SIZE/N-1) begin
+          
+        end else if (read_count +1 < DATA_SIZE/N) begin
           read_count <= read_count + 1;
+//          axi_last <= read_idx == write_idx;
         end else if (read_count == DATA_SIZE/N-1) begin
           read_count <= 0;
           axiov <= read_idx == write_idx ? 0 : axiov;
+	  axi_last <= read_idx == write_idx;
         end
       end else begin
         axiov <= 0;
+        axi_last <= 0;
         if (axiiv == 1) begin
           read_idx <= 0;
           read_count <= 0;

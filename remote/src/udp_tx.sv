@@ -40,7 +40,7 @@ module udp_tx #(parameter N=2) (
     .clk(clk),
     .rst(rst),
     .axiiv(axiov),
-    .axiid(cksum_valid_in ? axiod : 4'b0),
+    .axiid(cksum_valid_in ? axiod : 0),
     .init_valid(init_valid),
     .init_data(init_data[15:0] + init_data[16]),
     .axiod(udp_checksum)

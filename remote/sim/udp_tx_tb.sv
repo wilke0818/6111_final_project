@@ -63,7 +63,7 @@ module udp_tx_tb;
 
     src_port = 16'd53;
     dst_port = 16'd554;
-    data_cksum = 16'h9fcb;
+    data_cksum = 16'h6034;
     $display("Expected axiov: 0, expected axiod: anything, expected axi_last: 0, actual axiov: %b, actual axiod: %b, actual axi_last: %b", axiov4, axiod4, axi_last);
     #40;
     $display("Expected axiov: 1, expected axiod: 0x0, expected axi_last: 0, actual axiov: %b, actual axiod: %h, actual axi_last: %b", axiov4, axiod4, axi_last);
@@ -93,13 +93,13 @@ module udp_tx_tb;
     $display("Expected axiov: 1, expected axiod: 0xC, expected axi_last: 0, actual axiov: %b, actual axiod: %h, actual axi_last: %b", axiov4, axiod4, axi_last);
     #40;
 //CKSUM
-    $display("Expected axiov: 1, expected axiod: 0x0, expected axi_last: 0, actual axiov: %b, actual axiod: %h, actual axi_last: %b", axiov4, axiod4, axi_last);
+    $display("Expected axiov: 1, expected axiod: 0x4, expected axi_last: 0, actual axiov: %b, actual axiod: %h, actual axi_last: %b", axiov4, axiod4, axi_last);
     #40;
     $display("Expected axiov: 1, expected axiod: 0xD, expected axi_last: 0, actual axiov: %b, actual axiod: %h, actual axi_last: %b", axiov4, axiod4, axi_last);
     #40;
-    $display("Expected axiov: 1, expected axiod: 0xB, expected axi_last: 0, actual axiov: %b, actual axiod: %h, actual axi_last: %b", axiov4, axiod4, axi_last);
+    $display("Expected axiov: 1, expected axiod: 0x5, expected axi_last: 0, actual axiov: %b, actual axiod: %h, actual axi_last: %b", axiov4, axiod4, axi_last);
     #40;
-    $display("Expected axiov: 1, expected axiod: 0xA, expected axi_last: 1, actual axiov: %b, actual axiod: %h, actual axi_last: %b", axiov4, axiod4, axi_last);
+    $display("Expected axiov: 1, expected axiod: 0x1, expected axi_last: 1, actual axiov: %b, actual axiod: %h, actual axi_last: %b", axiov4, axiod4, axi_last);
     #40;
     $display("Expected axiov: 0, expected axi_last: 0, actual axiov: %b, actual axiod: %h, actual axi_last: %b", axiov4, axiod4, axi_last);
     #40;

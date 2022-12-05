@@ -39,12 +39,13 @@ module internet_protocol_tx #(parameter N=2) (
   logic [1:0] init_state;
 
   assign ip_length = data_length_in + transport_header_length_in + 16'd20;
+  //assign axiov = ~rst ?  state != NON_IP && axiiv : 0;
   
   bland_cksum #(.N(N)) udp_cksum (
     .clk(clk),
     .rst(rst),
     .axiiv(axiov),
-    .axiid(cksum_valid_in ? axiod : 4'b0),
+    .axiid(cksum_valid_in ? axiod : 0),
     .init_valid(init_valid),
     .init_data(init_data[15:0] + init_data[16]),
     .axiod(ip_checksum)
@@ -77,18 +78,22 @@ module internet_protocol_tx #(parameter N=2) (
     end
   end
 
+  //assign cksum_valid_in = rst ? 0 : axiiv && (state < PRE_PROTOCOL || (state == PRE_PROTOCOL && count <= 16/N)) ? 1'b1 : 0;
+
   always_ff @(posedge clk) begin
     if (rst) begin
       state <= 0;
       axiov <= 0;
       axiod <= 0;
       id <= 0;
+      cksum_valid_in <= 0;
     end else begin
       if (axiiv) begin
-        axiov <= 1'b1;
+      //  axiov <= 1'b1;
         case (state)
           FIRST_TWO_BYTES : begin
             cksum_valid_in <= 1'b1;
+            axiov <= 1'b1;
             axiod <= V_IHL_DSCP_ECN[15-N*count -: N];
             count <= count == 16/N-1 ? 0 : count + 1;
             state <= count == 16/N-1 ? LENGTH : state;
@@ -140,7 +145,7 @@ module internet_protocol_tx #(parameter N=2) (
       end else begin
         state <= V_IHL_DSCP_ECN;
         count <= 0;
-        axiov <= 0;
+       // axiov <= 0;
       end
     end
   end

@@ -26,9 +26,16 @@ module ethertype #(parameter N=2) (
       end else if ({ethertype[15:N],axiid} == 16'h0806) begin //ARP
         axiod = 1'b1;
         axiov = 1'b1;
+      end else begin
+        axiod = 0;
+        axiov = 0;
       end
     end else if (~axiiv) begin
       axiov = 1'b0;
+      axiod = 0;
+    end else begin
+      axiod = 0;
+      axiov = 0;
     end
   end
   

@@ -38,6 +38,7 @@ module network_tx #(parameter N=2) (
     .rst(rst),
     .axiiv(ip_axiiv),
     .axiov(ip_axiov),
+    .axiod(ip_axiod),
     .src_ip_in(src_ip_in),
     .dst_ip_in(dst_ip_in),
     .protocol_in(ip_protocol_in),
