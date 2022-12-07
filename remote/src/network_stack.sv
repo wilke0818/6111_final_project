@@ -156,6 +156,7 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
 
   //other variables
   logic prev_axiiv;
+  logic [5:0] gap_count;
   
 
   assign eth_txen = bit_axiov_tx | cksum_axiov_tx;
@@ -262,7 +263,7 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
           ether_axiiv_tx = prev_axiiv && ~axiiv ? 1'b1 : ether_axiov_tx;
           eth_txd = bit_axiod_tx;
           bit_axiid_tx = ether_axi_last ? network_axiod_tx : ether_axiod_tx;
-          bit_axiiv_tx = 1'b1;
+          bit_axiiv_tx = ether_axi_last ? network_axiiv_tx : ether_axiov_tx;
         end
         TX_NETWORK : begin
           ether_axiiv_tx = 0;
@@ -309,6 +310,7 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
       bit_axio_cksum_count <= 0;
       cksum_count_tx <= 0;
       cksum_axiov_tx <= 0;
+      gap_count <= 0;
     end else begin
       prev_axiiv <= axiiv;
 
@@ -354,13 +356,20 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
         TX_ETHERNET_CKSUM : begin
           if (~bit_axiov_tx) begin
             //cksum_axiiv_tx <= 0;
-            if (cksum_count_tx < 32/N) begin
+            if (cksum_count_tx < 32/N-1) begin
               cksum_axiov_tx <= 1'b1;
               cksum_count_tx <= cksum_count_tx + 1;
             end else begin
               cksum_axiov_tx <= 0;
               tx_state <= TX_INTERPACKET_GAP;
             end
+          end
+        end
+        TX_INTERPACKET_GAP : begin
+          if (gap_count < 96/N-1) begin
+            gap_count <= gap_count + 1;
+          end else begin
+            tx_state <= TX_ETHERNET;
           end
         end
       endcase

@@ -5,7 +5,7 @@
 `define IP                160'h54_08_00_02_00_00_04_00_04_11_AE_B5_21_21_B6_D0_96_96_96_96
 `define UDP               64'h00_53_20_A2_00_C0_D4_15
 `define DATA              32'hE1_B4_18_08
-`define ETH_CKSUM         32'hE095CED4
+`define ETH_CKSUM         32'h6793D750
 
 
 module network_stack_tx_tb;
@@ -131,12 +131,16 @@ module network_stack_tx_tb;
     
     //CKSUM
     for (int i = 0; i < 32; i= i+4) begin
-      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {eth_cksum[i+2], eth_cksum[i+3]}, axiov4, axiod4);
-      #40;
       $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {eth_cksum[i], eth_cksum[i+1]}, axiov4, axiod4);
+      #40;
+      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {eth_cksum[i+2], eth_cksum[i+3]}, axiov4, axiod4);
       #40;
     end
 
+    for (int i = 0; i < 96/2; i=i+1) begin
+      #40;
+    end
+    #120;
     $finish;
   end
 
