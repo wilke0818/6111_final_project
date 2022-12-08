@@ -10,7 +10,8 @@ module arp_rx #(parameter N=2) (
     output logic axiov,
     output logic [N-1:0] axiod //Change later once we know what we want out of IP
   );
-
+  assign axiov = 0;
+  assign axiod = 0;
 endmodule
 
 `default_nettype wire

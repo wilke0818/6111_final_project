@@ -5,7 +5,7 @@ module top_level(
   input wire clk, //clock @ 100 mhz
   input wire btnc, //btnc (used for reset)
   input wire btnl,
-  input wire btnr,
+ // input wire btnr,
   output logic eth_refclk,
   input wire [1:0] eth_rxd,
   output logic eth_rstn,
