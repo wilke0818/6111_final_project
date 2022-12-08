@@ -5,6 +5,7 @@ module top_level(
   input wire clk, //clock @ 100 mhz
   input wire btnc, //btnc (used for reset)
   input wire btnl,
+  input wire btnr,
   output logic eth_refclk,
   input wire [1:0] eth_rxd,
   output logic eth_rstn,
@@ -31,6 +32,11 @@ module top_level(
   logic [2:0] test_count;
   logic test_data_valid_in, send_button, old_send_button;
   
+//  logic [1599:0] display_out;
+//  logic [20:0] display_count;
+
+ // logic old_right, new_right;
+
   divider ether_clk( 
     .clk(clk),
     .ethclk(eth_refclk)
@@ -40,6 +46,11 @@ module top_level(
                   .rst_in(sys_rst),
                   .dirty_in(btnl),
                   .clean_out(send_button));
+
+//  debouncer btnr_db(.clk_in(eth_refclk),
+  //                .rst_in(sys_rst),
+    //              .dirty_in(btnr),
+      //            .clean_out(new_right));
 
   network_stack #(.N(N), .DATA_SIZE(DATA_SIZE)) da_net(
     .clk(eth_refclk),
@@ -59,14 +70,33 @@ module top_level(
     .eth_txen(eth_txen)
   );
 
+
+  // seven_segment_controller mssc(.clk_in(eth_refclk),
+        //                         .rst_in(sys_rst),
+        //                          .val_in(display_out[1599-display_count*4 -: 32]),
+        //                          .cat_out({cg, cf, ce, cd, cc, cb, ca}),
+        //                          .an_out(an));
+
+
   always_ff @(posedge eth_refclk) begin
     if (sys_rst) begin
       old_send_button <= 0;
       test_data_valid_in <= 0;
       test_data_in <= 0;
       test_count <= 0;
+    //  display_out <= 0;
+    //  display_count <= 0;
     end else begin
       old_send_button <= send_button;
+    //  old_right <= new_right;
+    //  if (eth_txen) begin
+    //    display_out <= {display_out[1597:0], eth_txd[0], eth_txd[1]};
+    //  end
+
+    //  if (~old_right && new_right) begin
+    //    display_count <= display_count + 1;
+    //  end
+
       if (~old_send_button && send_button) begin
         test_data_valid_in <= 1'b1;
         test_data_in <= 16'hABCD;

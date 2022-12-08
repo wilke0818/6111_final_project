@@ -9,7 +9,7 @@ module data_store_tx #(parameter N=2, parameter DATA_SIZE=16) (
   input wire read_request,
   output logic axiov,
   output logic [N-1:0] axiod,
-  output logic [15:0] data_cksum,
+  output logic [15:0] data_sum,
   output logic [15:0] data_length, //will be in bytes
   output logic axi_last
 );
@@ -21,7 +21,7 @@ module data_store_tx #(parameter N=2, parameter DATA_SIZE=16) (
   logic [15:0] read_out;
   logic [8:0] bytes_written;
   logic [1:0] cycle_delay_start, cycle_delay_end;
-  logic [16:0] sum;
+  logic [17:0] sum;
   logic [47:0] word;
 
   logic [3:0] position;
@@ -29,7 +29,7 @@ module data_store_tx #(parameter N=2, parameter DATA_SIZE=16) (
 
   logic [DATA_SIZE-1:0] read_data;
 
-  assign data_cksum = ~ (sum+word[47:32]+word[31:16]+word[15:0] + ((sum+word[47:32]+word[31:16]+word[15:0])>>16));
+  assign data_sum = (sum+word[47:32]+word[31:16]+word[15:0] + ((sum+word[47:32]+word[31:16]+word[15:0])>>16));
   assign data_length = position > 8 ? (bytes_written<<1) + 2 : position > 0 ? (bytes_written<<1)+1 : bytes_written<<1;
 
   xilinx_true_dual_port_read_first_2_clock_ram #(
@@ -77,18 +77,10 @@ module data_store_tx #(parameter N=2, parameter DATA_SIZE=16) (
           word[47-cksum_count*DATA_SIZE -: DATA_SIZE] <= axiid;
         end else begin
           word <= 48'b0;
-          if (DATA_SIZE < 16) begin
-            if (sum + word[47:32] + word[31:16] + word[15 -: 16-DATA_SIZE] + axiid > 17'h0_ffff) begin
-              sum <= sum + word[47:32] + word[31:16] + {word[15 -: 16-DATA_SIZE], axiid} + 1'b1;
-            end else begin
-              sum <= sum + word[47:32] + word[31:16] + {word[15 -: 16-DATA_SIZE], axiid};
-            end
-          end else begin
-            if (sum + word[47:32] + word[31:16] + axiid > 17'h0_ffff) begin
-              sum <= sum + word[47:32] + word[31:16] + axiid + 1'b1;
-            end else begin
-              sum <= sum + word[47:32] + word[31:16] + axiid;
-            end
+          if (DATA_SIZE < 16) begin  
+            sum[15:0] <= sum + word[47:32] + word[31:16] + {word[15 -: 16-DATA_SIZE], axiid} + ((sum + word[47:32] + word[31:16] + {word[15 -: 16-DATA_SIZE], axiid})>>16);
+          end else begin  
+            sum[15:0] <= sum + word[47:32] + word[31:16] + axiid + ((sum + word[47:32] + word[31:16] + axiid)>>16);
           end
           cksum_count <= 0;
         end
@@ -106,9 +98,6 @@ module data_store_tx #(parameter N=2, parameter DATA_SIZE=16) (
       axi_last <= 0;
     end else begin
       if (read_request && read_idx <= write_idx) begin
-//        if (read_idx == write_idx) begin
-  //        axi_last <= 1'b1;
-    //    end
         if (cycle_delay_start == 0) begin
           axiov <= 1'b1;
           cycle_delay_start <= 1'b1;
@@ -120,11 +109,11 @@ module data_store_tx #(parameter N=2, parameter DATA_SIZE=16) (
           
         end else if (read_count +1 < DATA_SIZE/N) begin
           read_count <= read_count + 1;
-//          axi_last <= read_idx == write_idx;
+          axi_last <= read_idx == write_idx;
         end else if (read_count == DATA_SIZE/N-1) begin
           read_count <= 0;
           axiov <= read_idx == write_idx ? 0 : axiov;
-	  axi_last <= read_idx == write_idx;
+	 // axi_last <= read_idx == write_idx;
         end
       end else begin
         axiov <= 0;

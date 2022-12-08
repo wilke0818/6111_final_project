@@ -174,7 +174,7 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
     .read_request(data_axiiv_tx), //begin reading out data 
     .axiov(data_axiov_tx),
     .axiod(data_axiod_tx),
-    .data_cksum(data_cksum),
+    .data_sum(data_cksum),
     .data_length(data_length),
     .axi_last(data_axi_last)
   );
@@ -281,7 +281,7 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
           ether_axiiv_tx = 0;
           eth_txd = bit_axiod_tx;
           bit_axiid_tx = data_axiod_tx;
-          bit_axiiv_tx = 1'b1;
+          bit_axiiv_tx = data_axiov_tx;
         end
         TX_ETHERNET_CKSUM : begin
           ether_axiiv_tx = 0;
