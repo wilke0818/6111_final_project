@@ -22,7 +22,7 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
   );
 
   parameter MY_IP = 32'h12_12_6b_0d;
-  
+  logic [2:0] byte_count, bit_count;  
 
 //begin receiver
 
@@ -113,7 +113,7 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
 //end receiver
 
 //begin transmitter
-
+  
   parameter TX_ETHERNET = 0;
   parameter TX_NETWORK = 1;
   parameter TX_TRANSPORT = 2;
@@ -148,6 +148,7 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
   logic [N-1:0] cksum_axiid_tx;
   logic [31:0] cksum_axiod_tx;
   logic [4:0] cksum_count_tx;
+  logic old_txen;
 
   //bit order variables
   logic bit_axiiv_tx, bit_axiov_tx;
@@ -227,7 +228,7 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
   //TODO ethernet cksum
   crc32 check_sum(
     .clk(clk),
-    .rst(rst),
+    .rst(rst || (old_txen && ~eth_txen)),
     .axiiv(cksum_axiiv_tx), //drops when state changes to cksum
     .axiid(cksum_axiid_tx), 
     .axiov(), //always 1
@@ -250,6 +251,7 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
       bit_axiiv_tx = 0;
       eth_txd = 0;
       bit_axiid_tx = 0;
+     
     end else begin
 //      if (prev_axiiv && ~axiiv) begin
   //      ether_axiiv_tx = 1'b1;
@@ -285,8 +287,11 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
         end
         TX_ETHERNET_CKSUM : begin
           ether_axiiv_tx = 0;
+        //  bit_axiid_tx = cksum_axiod_tx[31 - N*cksum_count_tx -: N];
           if (~bit_axiov_tx) begin
-            eth_txd = cksum_axiod_tx[31 - N*cksum_count_tx -: N];
+            eth_txd = {cksum_axiod_tx[31 - N*cksum_count_tx-1], cksum_axiod_tx[31 - N*cksum_count_tx]};
+//            eth_txd = {cksum_axiod_tx[32 - 8*byte_count + N*bit_count],cksum_axiod_tx[32 - 8*byte_count + N*bit_count + 1]};
+//25:24,...,31:30,17:16
           end else begin
             eth_txd = bit_axiod_tx;
           end
@@ -311,9 +316,12 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
       cksum_count_tx <= 0;
       cksum_axiov_tx <= 0;
       gap_count <= 0;
+      bit_count <= 0;
+      byte_count <= 1;
+      old_txen <= 0;
     end else begin
       prev_axiiv <= axiiv;
-
+      old_txen <= eth_txen;
       case (tx_state)
         TX_ETHERNET : begin
           if (ether_axi_last) begin
@@ -355,14 +363,24 @@ module network_stack #(parameter N=2, parameter DATA_SIZE=16) (
         end
         TX_ETHERNET_CKSUM : begin
           if (~bit_axiov_tx) begin
-            //cksum_axiiv_tx <= 0;
             if (cksum_count_tx < 32/N-1) begin
               cksum_axiov_tx <= 1'b1;
               cksum_count_tx <= cksum_count_tx + 1;
             end else begin
+              //bit_axiiv_tx <= 0;
               cksum_axiov_tx <= 0;
+              cksum_count_tx <= 0;
+              gap_count <= 0;
               tx_state <= TX_INTERPACKET_GAP;
             end
+          //  if (bit_count < 8/N-1) begin
+          //    bit_count <= bit_count + 1;
+          //  end else begin
+          //    bit_count <= 0;
+          //    cksum_axiov_tx <= byte_count != 4 ? 1 : 0;
+          //    byte_count <= byte_count != 4 ? byte_count + 1 : 0;
+          //    tx_state <= byte_count == 4 ? TX_INTERPACKET_GAP : tx_state;
+          //  end
           end
         end
         TX_INTERPACKET_GAP : begin

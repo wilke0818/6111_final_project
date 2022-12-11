@@ -34,6 +34,8 @@ module internet_protocol_tx #(parameter N=2) (
   logic [15:0] ip_checksum, ip_length;
   logic [15:0] id;
 
+  logic rst_now;
+
   logic [16:0] src_sum, dst_sum, init_data, ip_sum;
   logic init_valid, cksum_valid_in;
   logic [1:0] init_state;
@@ -43,7 +45,7 @@ module internet_protocol_tx #(parameter N=2) (
   
   bland_cksum #(.N(N)) udp_cksum (
     .clk(clk),
-    .rst(rst),
+    .rst(rst || rst_now),
     .axiiv(axiov),
     .axiid(cksum_valid_in ? axiod : 0),
     .init_valid(init_valid),
@@ -87,6 +89,7 @@ module internet_protocol_tx #(parameter N=2) (
       axiod <= 0;
       id <= 0;
       cksum_valid_in <= 0;
+      rst_now <= 0;
     end else begin
       if (axiiv) begin
       //  axiov <= 1'b1;
@@ -140,11 +143,14 @@ module internet_protocol_tx #(parameter N=2) (
           NON_IP : begin
             axi_last <= 1'b0;
             axiov <= 1'b0;
+            rst_now <= 1'b1;
           end
         endcase
       end else begin
         state <= V_IHL_DSCP_ECN;
         count <= 0;
+        axiod <= 0;
+        rst_now <= 0;
        // axiov <= 0;
       end
     end

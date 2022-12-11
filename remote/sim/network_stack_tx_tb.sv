@@ -14,6 +14,11 @@ end while (0)
 `define DATA              112'hBA_DC_96_96_FF_FF_40_02_BA_DC_96_96_FF_FF
 `define ETH_CKSUM         32'hA08B2D90
 
+`define ETHERNET_TWO          176'h55_55_55_55_55_55_55_5D_FF_FF_FF_FF_FF_FF_24_40_02_24_40_02_8000
+`define IP_TWO                160'h54_08_00_A2_00_10_04_00_04_11_DB_32_21_21_B6_D0_FF_FF_FF_FF
+`define UDP_TWO               64'h4A_55_4A_55_00_61_B0_A6
+`define DATA_TWO              112'hBA_DC_96_96_FF_FF_40_02_BA_DC_96_96_FF_FF
+`define ETH_CKSUM_TWO         32'hB43ACF85
 
 module network_stack_tx_tb;
   
@@ -46,6 +51,18 @@ module network_stack_tx_tb;
   assign udp = `UDP;
   assign data = `DATA;
   assign eth_cksum = `ETH_CKSUM;
+
+  logic [0:175] ethernet2;
+  logic [0:159] ip2;
+  logic [0:63] udp2;
+  logic [0:111] data2;
+  logic [0:31] eth_cksum2;
+
+  assign ethernet2 = `ETHERNET_TWO;
+  assign ip2 = `IP_TWO;
+  assign udp2 = `UDP_TWO;
+  assign data2 = `DATA_TWO;
+  assign eth_cksum2 = `ETH_CKSUM_TWO;
 
   logic ok;
 
@@ -160,11 +177,11 @@ module network_stack_tx_tb;
     
     //CKSUM
     for (int i = 0; i < 32; i= i+4) begin
-      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {eth_cksum[i], eth_cksum[i+1]}, axiov4, axiod4);
-      `CHECK({eth_cksum[i], eth_cksum[i+1]} === axiod4, ok, "FAILED HERE");
+      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {eth_cksum[i+1], eth_cksum[i]}, axiov4, axiod4);
+      `CHECK({eth_cksum[i+1], eth_cksum[i]} === axiod4, ok, "FAILED HERE");
       #40;
-      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {eth_cksum[i+2], eth_cksum[i+3]}, axiov4, axiod4);
-      `CHECK({eth_cksum[i+2], eth_cksum[i+3]} === axiod4, ok, "FAILED HERE");
+      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {eth_cksum[i+3], eth_cksum[i+2]}, axiov4, axiod4);
+      `CHECK({eth_cksum[i+3], eth_cksum[i+2]} === axiod4, ok, "FAILED HERE");
       #40;
     end
 
@@ -172,6 +189,102 @@ module network_stack_tx_tb;
       #40;
     end
     #120;
+
+    $display("Interpacket gap finished");
+//    assign ethernet = `ETHERNET_TWO;
+//    assign ip = `IP_TWO;
+//    assign udp = `UDP_TWO;
+//    assign data = `DATA_TWO;
+//    assign eth_cksum = `ETH_CKSUM_TWO;
+
+    $display("Starting new sim");
+    axiiv4 = 1'b1;
+    axiid4 = 16'hAB_CD;
+    #40;
+    axiid4 = 16'h6969;
+    #40;
+    axiid4 = 16'hFFFF;
+    #40;
+    axiid4 = 16'h0420;
+    #40;
+    axiid4 = 16'hAB_CD;
+    #40;
+    axiid4 = 16'h6969;
+    #40;
+    axiid4 = 16'hFFFF;
+    #40;
+    ok = 1;
+    
+    axiiv4 = 0;
+    #40;
+    $display("expected eth_txen: 0, eth_txd: X, actual eth_txen: %b, eth_txd: %b", axiov4, axiod4);
+    #40;
+    $display("expected eth_txen: 0, eth_txd: X, actual eth_txen: %b, eth_txd: %b", axiov4, axiod4);
+    #40;
+    $display("expected eth_txen: 0, eth_txd: X, actual eth_txen: %b, eth_txd: %b", axiov4, axiod4);
+    #40;
+    $display("expected eth_txen: 0, eth_txd: X, actual eth_txen: %b, eth_txd: %b", axiov4, axiod4);
+    #40;    
+    //ETHERNET 
+    for (int i = 0; i < 176; i= i+4) begin
+      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {ethernet2[i+2], ethernet2[i+3]}, axiov4, axiod4);
+      `CHECK({ethernet2[i+2], ethernet2[i+3]} === axiod4, ok, "FAILED HERE");
+      #40;
+      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {ethernet2[i], ethernet2[i+1]}, axiov4, axiod4);
+      `CHECK({ethernet2[i], ethernet2[i+1]} === axiod4, ok, "FAILED HERE");
+      #40;
+    end
+    $display("Starting to show IP");
+    
+    //IP
+    for (int i = 0; i < 160; i= i+4) begin
+      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {ip2[i+2], ip2[i+3]}, axiov4, axiod4);
+      `CHECK({ip2[i+2], ip2[i+3]} === axiod4, ok, "FAILED HERE");
+      #40;
+      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {ip2[i], ip2[i+1]}, axiov4, axiod4);
+      `CHECK({ip2[i], ip2[i+1]} === axiod4, ok, "FAILED HERE");
+      #40;
+    end
+    $display("Starting to show UDP");
+    
+    //UDP
+    for (int i = 0; i < 64; i= i+4) begin
+      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {udp2[i+2], udp2[i+3]}, axiov4, axiod4);
+      `CHECK({udp2[i+2], udp2[i+3]} === axiod4, ok, "FAILED HERE");
+      #40;
+      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {udp2[i], udp2[i+1]}, axiov4, axiod4);
+      `CHECK({udp2[i], udp2[i+1]} === axiod4, ok, "FAILED HERE");
+      #40;
+    end
+    $display("Starting to show DATA");
+    
+    //DATA
+    for (int i = 0; i < 112; i= i+4) begin
+      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {data2[i+2], data2[i+3]}, axiov4, axiod4);
+      `CHECK({data2[i+2], data2[i+3]} === axiod4, ok, "FAILED HERE");
+      #40;
+      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {data2[i], data2[i+1]}, axiov4, axiod4);
+      `CHECK({data2[i], data2[i+1]} === axiod4, ok, "FAILED HERE");
+      #40;
+    end
+    $display("Starting to show CKSUM");
+    
+    //CKSUM
+    for (int i = 0; i < 32; i= i+4) begin
+      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {eth_cksum2[i+1], eth_cksum2[i]}, axiov4, axiod4);
+      `CHECK({eth_cksum2[i+1], eth_cksum2[i]} === axiod4, ok, "FAILED HERE");
+      #40;
+      $display("expected eth_txen: 1, eth_txd: %b, actual eth_txen: %b, eth_txd: %b", {eth_cksum2[i+3], eth_cksum2[i+2]}, axiov4, axiod4);
+      `CHECK({eth_cksum2[i+3], eth_cksum2[i+2]} === axiod4, ok, "FAILED HERE");
+      #40;
+    end
+
+    for (int i = 0; i < 96/2; i=i+1) begin
+      #40;
+    end
+    #120;
+ 
+
     $finish;
   end
 
