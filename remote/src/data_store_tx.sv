@@ -54,7 +54,7 @@ module data_store_tx #(parameter N=2, parameter DATA_SIZE=16) (
   .doutb()          // Port B RAM output data
 );
 
-
+  logic old_axiov;
   assign axiod = read_data[DATA_SIZE-1-N*read_count -: N];
 
   // Writing to the BRAM
@@ -84,6 +84,15 @@ module data_store_tx #(parameter N=2, parameter DATA_SIZE=16) (
           end
           cksum_count <= 0;
         end
+      end else begin
+        if (old_axiov && ~axiov) begin
+          write_idx <= 0;
+          bytes_written <= 0;
+          position <= 0;
+          sum <= 0;
+          cksum_count <= 0;
+          word <= 0;
+        end
       end
     end
   end
@@ -96,7 +105,9 @@ module data_store_tx #(parameter N=2, parameter DATA_SIZE=16) (
       read_count <= 0;
       cycle_delay_start <= 0;
       axi_last <= 0;
+      old_axiov <= 0;
     end else begin
+      old_axiov <= axiov;
       if (read_request && read_idx <= write_idx) begin
         if (cycle_delay_start == 0) begin
           axiov <= 1'b1;
