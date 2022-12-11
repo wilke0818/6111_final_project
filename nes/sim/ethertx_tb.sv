@@ -7,15 +7,15 @@ module ethertx_tb;
   /* logics for inputs and outputs */
   logic clk_in;
   logic rst_in;
-  logic [3:0] axiid;
+  logic [1:0] axiid;
   logic axiiv;
   logic [47:0] my_mac = 48'h12_34_56_78_90_AB;
   logic [47:0] dest_mac = 48'hFF_FF_FF_FF_FF_FF;
   logic [15:0] etype = 16'hF0F0;
   logic axiov;
-  logic [3:0] axiod;  /* be sure this is the right bit width! */
+  logic [1:0] axiod;  /* be sure this is the right bit width! */
 
-  ethernet_tx #(.N(4)) uut(  
+  ethernet_tx #(.N(2)) uut(  
               .clk(clk_in),
               .rst(rst_in),
               .axiid(axiid),

@@ -52,6 +52,7 @@ module ethernet_tx #(parameter N=2) (
 
   logic axii_cksum_header;
   logic axii_cksum_data;
+  logic axiiv_cksum;
 
   logic [15:0] test_counter;
   parameter TEST_BYTE = 8'b1110_1011;
@@ -61,10 +62,12 @@ module ethernet_tx #(parameter N=2) (
   
   
   
+  /*
   ila_0 i(.clk(clk),
         .probe0(axiov),
         .probe1(axiod)
         );
+        */
 
       
 
@@ -98,7 +101,7 @@ module ethernet_tx #(parameter N=2) (
     crc32_4bit check_sum_4(
       .clk(clk),
       .rst(rst_cksum | rst),
-      .crc_en(axii_cksum_header | axii_cksum_data),
+      .crc_en(axiiv_cksum),//axii_cksum_header | axii_cksum_data),
       .data_in(axiid_cksum),
       .crc_out_en(check_valid_out_4),
       .crc_out(check_sum_out_4)
@@ -108,7 +111,7 @@ module ethernet_tx #(parameter N=2) (
     crc32 check_sum_2(
       .clk(clk),
       .rst(rst_cksum | rst),
-      .axiiv(axii_cksum_header | axii_cksum_data),
+      .axiiv(axiiv_cksum),//axii_cksum_header | axii_cksum_data),
       .axiid(axiid_cksum),
       .axiov(check_valid_out_2),
       .axiod(check_sum_out_2)
@@ -124,10 +127,12 @@ module ethernet_tx #(parameter N=2) (
       axiod_raw = 0;
       axiid_cksum = 0;
     end else if (state == SEND_HEADER)begin
-      axiid_cksum = axiod_ether;
+      axiid_cksum = axiod_flipped;
+      // axiid_cksum = axiod_ether;
       axiod_raw = axiod_ether;
     end else if (state == SEND_DATA)begin
-      axiid_cksum = axiod_data;
+      axiid_cksum = axiod_flipped;
+      // axiid_cksum = axiod_data;
       axiod_raw = axiod_data;
     end else if (state == SEND_CRC)begin
       axiod_raw = 0;
@@ -171,7 +176,7 @@ module ethernet_tx #(parameter N=2) (
         test_counter <= 0;
         axii_cksum_data <= 0;
         old_axiov <= 0;
-        // axii_cksum <= 0;
+        axiiv_cksum <= 0;
         if (~old_axiiv && axiiv) begin
           axiiv_ether <= 1;
           state <= SEND_HEADER;
@@ -185,9 +190,18 @@ module ethernet_tx #(parameter N=2) (
         end
         old_axiov <= axiov_ether;
         axiiv_ether <= 0;
+        if (axii_cksum_header && test_counter == 0)begin
+          test_counter <= 8/N-1;
+        end
+        if (test_counter > 0)begin
+          test_counter <= test_counter - 1;
+        end
+        if (test_counter == 1)begin
+          axiiv_cksum <= 1;
+        end
         if (old_axiov && ~axiov_ether) begin
           // axii_cksum <= 1;    // FIXME: REMOVE THIS ONCE DATA MODULE IS WRITTEN
-          axii_cksum_data <= 1;
+          // axii_cksum_data <= 1;
           axiov_data <= 1;
           axiod_data <= TEST_BYTE[7:6];
           state <= SEND_DATA;
@@ -196,22 +210,23 @@ module ethernet_tx #(parameter N=2) (
       SEND_DATA: begin
         // axiod_raw <= axiod_data;
         test_counter <= test_counter + 1;
-        if (test_counter == 30)
+        if (test_counter == 70)
           axiod_data <= 2'b10;
-        if (test_counter == 31)begin
+        if (test_counter == 71)begin
           // axiod_data <= TEST_BYTE[3:0];
           // axiov_raw <= 0;
           axiov_data <= 0;
-          axii_cksum_data <= 0;
+          // axii_cksum_data <= 0;
           cksum_count <= 31;
           test_counter <= 33;
           // state <= SEND_CRC;
         end
         if (~axiov_data) begin
           test_counter <= test_counter + 1;
-          if (test_counter == 34)begin
+          if (test_counter == 34+(8/N-2))begin
             axiov_raw <= 0;
-            axii_cksum_data <= 0;
+            // axii_cksum_data <= 0;
+            axiiv_cksum <= 0;
             state <= SEND_CRC; 
           end
         end

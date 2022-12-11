@@ -78,6 +78,101 @@ module top_level(
         //                          .an_out(an));
 
 
+  // Frame buffer stuff
+  // 12x(240x256) BRAM
+  // Pixel decoder
+  // Frame buffer
+  // VGA module
+  /*
+
+  logic [15:0] bram_addr_frameb;
+  logic axiov_frameb;
+  logic [11:0] bram_datain_frameb;
+  logic [15:0] pixel_addr_out;
+  logic [11:0] frame_buff;
+
+  logic axiov_pixeldec;
+  logic [11:0] axiod_pixeldec;
+  logic [7:0] line_y_pixeldec;
+  logic axiov_frameb;
+
+
+
+  //Two Clock Frame Buffer:
+  //Data written on 16.67 MHz (From camera)
+  //Data read on 65 MHz (start of video pipeline information)
+  //Latency is 2 cycles.
+  xilinx_true_dual_port_read_first_2_clock_ram #(
+    .RAM_WIDTH(12),
+    .RAM_DEPTH(256*240))
+    frame_buffer (
+    //Write Side (100 MHz)
+    .addra(bram_addr_frameb),
+    .clka(clk_100mhz),
+    .wea(axiov_frameb),
+    .dina(bram_datain_frameb),
+    .ena(1'b1),
+    .regcea(1'b1),
+    .rsta(sys_rst),
+    .douta(),
+    //Read Side (65 MHz)
+    .addrb(pixel_addr_out),
+    .dinb(16'b0),
+    .clkb(clk_65mhz),
+    .web(1'b0),
+    .enb(1'b1),
+    .rstb(sys_rst),
+    .regceb(1'b1),
+    .doutb(frame_buff)
+  );
+  assign pixel_addr_out = (vcount * 256 + hcount);
+  assign color = frame_buff;
+
+  logic [10:0] hcount;    // pixel on current line
+  logic [9:0] vcount;     // line number
+  logic hsync, vsync, blank; //control signals for vga
+
+  vga vga_gen(
+    .pixel_clk_in(clk_65mhz),
+    .hcount_out(hcount),
+    .vcount_out(vcount),
+    .hsync_out(hsync),
+    .vsync_out(vsync),
+    .blank_out(blank));
+
+    // DON'T FORGET TO ADD vga_{rgb} AND vga_hs/vs TO OUTPUTS
+    
+  pixel_decoder pixel_m
+    ( .clk(clk_100mhz)
+    , .rst(sys_rst)
+    , .axiiv(axiov_nstack)
+    , .axiid(axiod_nstack)
+    , .axiov(axiov_pixeldec)
+    , .axiod(axiod_pixeldec)
+    , .line_y(line_y_pixeldec)
+    );
+
+  framebuffer frame_m
+    #( .FRAME_WIDTH(256) )
+    ( .clk(clk_100mhz)
+    , .rst(sys_rst)
+    , .axiiv(axiov_pixeldec)
+    , .axiid(axiod_pixeldec)
+    , .line_y(line_y_pixeldec)
+    , .axiov(axiov_frameb)
+    , .bram_addr(bram_addr_frameb)
+    , .bram_data_in(bram_datain_frameb)
+    );
+    
+    // the following lines are required for the Nexys4 VGA circuit - do not change
+    assign vga_r = ~blank ? color[11:8]: 0;
+    assign vga_g = ~blank ? color[7:4] : 0;
+    assign vga_b = ~blank ? color[3:0] : 0;
+
+    assign vga_hs = ~hsync;
+    assign vga_vs = ~vsync;
+    */
+
   always_ff @(posedge eth_refclk) begin
     if (sys_rst) begin
       old_send_button <= 0;
