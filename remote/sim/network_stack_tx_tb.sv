@@ -66,7 +66,7 @@ module network_stack_tx_tb;
 
   logic ok;
 
-  network_stack #(.N(N), .DATA_SIZE(16)) uut4
+  network_stack_tx #(.N(N), .DATA_SIZE(16)) uut4
                (.clk(clk_in),
                 .rst(rst_in),
                 .axiiv(axiiv4),

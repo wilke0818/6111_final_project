@@ -22,7 +22,7 @@
 `define DATA              32'hE1_B4_18_08
 `define ETH_CKSUM         32'hF47AFBB1
 
-module network_stack_tb;
+module network_stack_rx_tb;
   
   /* logics for inputs and outputs */
   logic clk_in;
@@ -81,14 +81,12 @@ module network_stack_tb;
   assign data = `DATA;
   assign eth_cksum = `ETH_CKSUM;
 
-  network_stack #(.N(4)) uut4
+  network_stack_rx #(.N(4)) uut4
                (.clk(clk_in),
                 .rst(rst_in),
                 .eth_rxd(axiid),
                 .eth_crsdv(axiiv4),
                 .mac(48'h42_04_20_42_04_20),
-                .eth_txen(),
-                .eth_txd(),
                 .axiov(axiov4),
                 .axiod(axiod4));
 
@@ -100,8 +98,8 @@ module network_stack_tb;
 
   initial begin
     $display("Starting Sim"); //print nice message
-    $dumpfile("network_stack.vcd"); //file to store value change dump (vcd)
-    $dumpvars(0,network_stack_tb); //store everything at the current level and below
+    $dumpfile("network_stack_rx.vcd"); //file to store value change dump (vcd)
+    $dumpvars(0,network_stack_rx_tb); //store everything at the current level and below
     
 
     clk_in = 0;
@@ -115,6 +113,141 @@ module network_stack_tb;
     #40;
     rst_in = 0;
     #40; 
+
+    axiiv4 = 1'b1;
+    
+    //PREAMBLE
+    for (int i = 0; i < 64; i=i+4) begin
+      axiid = {preamble[i], preamble[i+1], preamble[i+2], preamble[i+3]};
+      #40;
+    end
+
+    //ETH DST
+    for (int i = 0; i < 48; i=i+4) begin
+      axiid = {dst[i], dst[i+1], dst[i+2], dst[i+3]};
+      #40;
+    end
+
+    //ETH SRC
+    for (int i = 0; i < 48; i=i+4) begin
+      axiid = {src[i], src[i+1], src[i+2], src[i+3]};
+      #40;
+    end
+
+    //ETYPE
+    for (int i = 0; i < 16; i=i+4) begin
+      axiid = {etype[i], etype[i+1], etype[i+2], etype[i+3]};
+      #40;
+    end
+
+    //VERSION_HLENGTH
+    for (int i = 0; i < 8; i=i+4) begin
+      axiid = {version_hlength[i], version_hlength[i+1], version_hlength[i+2], version_hlength[i+3]};
+      #40;
+    end
+
+    //DSCP_ECN
+    for (int i = 0; i < 8; i=i+4) begin
+      axiid = {dscp_ecn[i], dscp_ecn[i+1], dscp_ecn[i+2], dscp_ecn[i+3]};
+      #40;
+    end
+
+    //LENGTH
+    for (int i = 0; i < 16; i=i+4) begin
+      axiid = {length[i], length[i+1], length[i+2], length[i+3]};
+      #40;
+    end
+
+    //ID
+    for (int i = 0; i < 16; i=i+4) begin
+      axiid = {id[i], id[i+1], id[i+2], id[i+3]};
+      #40;
+    end
+
+    //FRAGMENTS
+    for (int i = 0; i < 16; i=i+4) begin
+      axiid = {fragment[i], fragment[i+1], fragment[i+2], fragment[i+3]};
+      #40;
+    end
+
+    //TTL
+    for (int i = 0; i < 8; i=i+4) begin
+      axiid = {ttl[i], ttl[i+1], ttl[i+2], ttl[i+3]};
+      #40;
+    end
+
+    //PROTOCOL
+    for (int i = 0; i < 8; i=i+4) begin
+      axiid = {protocol[i], protocol[i+1], protocol[i+2], protocol[i+3]};
+      #40;
+    end
+
+    //IP_CKSUM
+    for (int i = 0; i < 16; i=i+4) begin
+      axiid = {ip_cksum[i], ip_cksum[i+1], ip_cksum[i+2], ip_cksum[i+3]};
+      #40;
+    end
+
+    //IP_SRC
+    for (int i = 0; i < 32; i=i+4) begin
+      axiid = {ip_src[i], ip_src[i+1], ip_src[i+2], ip_src[i+3]};
+      #40;
+    end
+
+    //IP_DST
+    for (int i = 0; i < 32; i=i+4) begin
+      axiid = {ip_dst[i], ip_dst[i+1], ip_dst[i+2], ip_dst[i+3]};
+      #40;
+    end
+
+    //SRC_PORT
+    for (int i = 0; i < 16; i=i+4) begin
+      axiid = {src_port[i], src_port[i+1], src_port[i+2], src_port[i+3]};
+      #40;
+    end
+
+    //DST_PORT
+    for (int i = 0; i < 16; i=i+4) begin
+      axiid = {dst_port[i], dst_port[i+1], dst_port[i+2], dst_port[i+3]};
+      #40;
+    end
+
+    //UDP_LENGTH
+    for (int i = 0; i < 16; i=i+4) begin
+      axiid = {udp_length[i], udp_length[i+1], udp_length[i+2], udp_length[i+3]};
+      #40;
+    end
+
+    //UDP_CKSUM
+    for (int i = 0; i < 16; i=i+4) begin
+      axiid = {udp_cksum[i], udp_cksum[i+1], udp_cksum[i+2], udp_cksum[i+3]};
+      #40;
+    end
+
+    //DATA
+    for (int i = 0; i < 32; i=i+4) begin
+      axiid = {data[i], data[i+1], data[i+2], data[i+3]};
+      #40;
+    end
+
+    //ETH_CKSUM
+    for (int i = 0; i < 32; i=i+4) begin
+      axiid = {eth_cksum[i], eth_cksum[i+1], eth_cksum[i+2], eth_cksum[i+3]};
+      #40;
+    end
+    axiiv4 = 0;
+
+    $display("axiov: %b, axiod: %h", axiov4, axiov4);
+    #40;
+    $display("axiov: %b, axiod: %h", axiov4, axiov4);
+    #40;
+    $display("axiov: %b, axiod: %h", axiov4, axiov4);
+    #40;
+    $display("axiov: %b, axiod: %h", axiov4, axiov4);
+    #40;
+
+    #400;
+
     axiiv4 = 1'b1;
     
     //PREAMBLE
@@ -246,6 +379,8 @@ module network_stack_tb;
     #40;
     $display("axiov: %b, axiod: %h", axiov4, axiov4);
     #40;
+
+
     $finish;
   end
 

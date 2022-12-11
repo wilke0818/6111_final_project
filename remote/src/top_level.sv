@@ -52,11 +52,9 @@ module top_level(
     //              .dirty_in(btnr),
       //            .clean_out(new_right));
 
-  network_stack #(.N(N), .DATA_SIZE(DATA_SIZE)) da_net(
+  network_stack_tx #(.N(N), .DATA_SIZE(DATA_SIZE)) da_net_tx(
     .clk(eth_refclk),
     .rst(sys_rst),
-    .eth_rxd(eth_rxd),
-    .eth_crsdv(eth_crsdv),
     .mac(MY_MAC),
     .dst_mac(48'hFF_FF_FF_FF_FF_FF),
     .axiiv(test_data_valid_in),
@@ -69,6 +67,23 @@ module top_level(
     .eth_txd(eth_txd),
     .eth_txen(eth_txen)
   );
+
+  network_stack_rx #(.N(N), .DATA_SIZE(DATA_SIZE)) da_net_rx(
+    .clk(eth_refclk),
+    .rst(sys_rst),
+    .eth_rxd(eth_rxd),
+    .eth_crsdv(eth_crsdv),
+    .mac(MY_MAC),
+    .dst_mac(48'hFF_FF_FF_FF_FF_FF),
+    .dst_ip_in(32'hFF_FF_FF_FF),
+    .transport_protocol_in(8'h11),
+    .ethertype_in(16'h0800),
+    .udp_src_port_in(16'd42069),
+    .udp_dst_port_in(16'd42069),
+    .axiov(),
+    .axiod()
+  );
+
 
 
   // seven_segment_controller mssc(.clk_in(eth_refclk),
