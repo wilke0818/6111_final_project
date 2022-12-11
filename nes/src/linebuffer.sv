@@ -4,6 +4,7 @@
 
 module linebuffer
     #(parameter LINE_WIDTH=260
+    , parameter LINE_HEIGHT=256
     , parameter CAM_LINE_WIDTH=480)
     ( input wire clk
     , input wire rst
@@ -16,6 +17,7 @@ module linebuffer
     
     logic [31:0] pixel_count; // Counts what hcount we're at. Could probably replace with hcount_in
     logic [8:0] i_read;
+    logic [15:0] line_count = 0;
     logic sw = 0;
 
     logic [8:0] lineb1_addr;
@@ -70,6 +72,7 @@ module linebuffer
             axiov <= 0;
             lineb1_valid <= 0;
             lineb2_valid <= 0;
+            line_count <= 0;
         end else begin
             if (i_read <= LINE_WIDTH)begin
                 axiov <= 1;
@@ -97,10 +100,18 @@ module linebuffer
                     end
                 end else if (pixel_count == LINE_WIDTH)begin
                     sw <= ~sw;
-                    i_read <= 0;
+                    if (line_count <= LINE_HEIGHT)begin
+                        line_count <= line_count + 1;
+                    end else begin
+                        line_count <= 0;
+                    end
+                    axiov <= 1;
+                    axiod <= line_count;
                     lineb1_valid <= 0;
                     lineb2_valid <= 0;
                 end else begin
+                    if (pixel_count == LINE_WIDTH + 1)
+                        i_read <= 0;
                     if (pixel_count >= CAM_LINE_WIDTH)begin
                         pixel_count <= 0;
                     end
