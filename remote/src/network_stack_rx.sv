@@ -18,6 +18,7 @@ module network_stack_rx #(parameter N=2, parameter DATA_SIZE=16) (
   );
 
   parameter MY_IP = 32'h12_12_6b_0d;
+  parameter BCAST_IP = 32'hFF_FF_FF_FF;
   logic [2:0] byte_count, bit_count;  
 
 //begin receiver
@@ -38,6 +39,9 @@ module network_stack_rx #(parameter N=2, parameter DATA_SIZE=16) (
 
   //DATA STORE VARIABLES
   logic data_rx_axiov, read_out;
+
+  logic prev_axiov;
+  logic prev_read_out;
 
   ethernet_rx #(.N(N)) ethernet_in(
     .clk(clk),
@@ -77,7 +81,7 @@ module network_stack_rx #(parameter N=2, parameter DATA_SIZE=16) (
     .clk(clk),
     .rst(rst),
     .axiid(ordered_eth_rxd),
-    .axiiv(ordered_eth_crsdv && network_rx_axiov && network_rx_dst_ip == MY_IP), //maybe remove last condition?
+    .axiiv(ordered_eth_crsdv && network_rx_axiov && (network_rx_dst_ip == MY_IP || network_rx_dst_ip == BCAST_IP)), //maybe remove last condition?
     .protocol_in(network_rx_protocol),
     .src_ip_in(network_rx_src_ip),
     .dst_ip_in(network_rx_dst_ip),
@@ -96,14 +100,29 @@ module network_stack_rx #(parameter N=2, parameter DATA_SIZE=16) (
     .axiod(axiod)
   );
 
-  always_ff @(posedge clk) begin
+  always_comb begin
     if (rst) begin
-      read_out <= 0;
+      read_out = 0;
     end else begin
       if (~prev_rx_done && rx_done) begin
-        read_out <= ~udp_kill && ~rx_kill;
+        read_out = ~udp_kill && ~rx_kill;
+      end else if (prev_axiov && ~axiov) begin
+        read_out = 0;
+      end else begin
+        read_out = prev_read_out;
       end
+    end
+  end
+
+  always_ff @(posedge clk) begin
+    if (rst) begin
+      prev_rx_done <= 0;
+      prev_axiov <= 0;
+      prev_read_out <= 0;
+    end else begin
       prev_rx_done <= rx_done;
+      prev_axiov <= axiov;
+      prev_read_out <= read_out;
     end
   end
 //end receiver

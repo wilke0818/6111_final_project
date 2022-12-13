@@ -30,7 +30,7 @@ module udp_rx #(parameter N=2) (
   logic [$clog2(16/N)-1:0] cksum_count;
   logic valid_output;
 
-  assign axiov = count >= DONE && udp_length == packet_length_in && (dst_port == 67 || dst_port == 68 || dst_port == 554); //RTSP
+  assign axiov = count >= DONE && udp_length == packet_length_in && (dst_port == 67 || dst_port == 68 || dst_port == 554 || dst_port == 42069); //RTSP
 
   //assign kill = axiiv ? 0 : ~(old_cksum_2 == 0 || cksum == 0);
 

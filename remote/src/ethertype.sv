@@ -11,9 +11,13 @@ module ethertype #(parameter N=2) (
   output logic axiod //Size will depend on number of states/supported ethertypes
 );
 
+
+
   parameter COUNT_TOTAL = 16/N;
   parameter COUNT_BITS = $clog2(COUNT_TOTAL);
 
+  logic [N-1:0] prev_axiod;
+  logic prev_axiov;
 
   logic [COUNT_BITS:0] count;
   logic [15:0] ethertype;
@@ -34,8 +38,8 @@ module ethertype #(parameter N=2) (
       axiov = 1'b0;
       axiod = 0;
     end else begin
-      axiod = 0;
-      axiov = 0;
+      axiod = prev_axiod;
+      axiov = prev_axiov;
     end
   end
   
@@ -43,12 +47,16 @@ module ethertype #(parameter N=2) (
     if (rst) begin
       count <= 0;
       ethertype <= 0;
+      prev_axiod <= 0;
+      prev_axiov <= 0;
     end else begin
+      prev_axiov <= axiov;
+      prev_axiod <= axiod;
       if (axiiv) begin
-        if (count < COUNT_TOTAL) begin
+        if (count < COUNT_TOTAL-1) begin
           count <= count + 1;
           ethertype[15-N*count -: N] <= axiid;
-        end else if (count == COUNT_TOTAL) begin
+        end else if (count == COUNT_TOTAL-1) begin
           count <= count+1;
         end
       end else begin

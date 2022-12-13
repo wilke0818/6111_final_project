@@ -18,6 +18,8 @@ module data_store_rx #(parameter N=2) (
   logic [7:0] words_written, read_count;
   logic [1:0] cycle_delay_start, cycle_delay_end;
 
+  logic prev_axiiv, prev_axiov;
+
   xilinx_true_dual_port_read_first_2_clock_ram #(
     .RAM_WIDTH(16),                       // Specify RAM data width
     .RAM_DEPTH(256)                     // Specify RAM depth (number of entries)
@@ -41,14 +43,24 @@ module data_store_rx #(parameter N=2) (
 );
 
 
+  always_comb begin
+    if (rst) begin
+      words_written = 0;
+    end else begin
+      words_written = write_idx - 2;
+    end
+  end
+
   // Writing to the BRAM
   always_ff @(posedge clk) begin
     if (rst) begin
       write_idx <= 0;
       write_in <= 0;
-      words_written <= 0;
+     // words_written <= 0;
       write_count <= 0;
+      prev_axiiv <= 0;
     end else begin
+      prev_axiiv <= axiiv;
       if (axiiv) begin
         if (write_count < 16/N-1) begin
           write_in[15-write_count*N -: N] <= axiid;
@@ -59,7 +71,11 @@ module data_store_rx #(parameter N=2) (
           write_idx <= write_idx + 1; 
         end
       end else begin
-        words_written <= write_idx - 2; //remove the last two words which are the ethernet checksum
+        if (~axiov && prev_axiov) begin
+          write_idx <= 0;
+          write_in <= 0;
+          write_count <= 0;
+        end
       end
     end
   end
@@ -71,7 +87,9 @@ module data_store_rx #(parameter N=2) (
       axiov <= 0;
       cycle_delay_start <= 2'd2;
       cycle_delay_end <= 0;
+      prev_axiov <= 0;
     end else begin
+      prev_axiov <= axiov;
       if (read_request) begin
         if (cycle_delay_start ==0) begin
           cycle_delay_end <= 0;
@@ -99,7 +117,8 @@ module data_store_rx #(parameter N=2) (
           cycle_delay_end <= cycle_delay_end + 1;
         end else begin
           axiov <= 0;
-          read_idx <= 0;
+          read_idx <= 0; 
+          cycle_delay_start <= 2'd2;
         end
       end
     end
