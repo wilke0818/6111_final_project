@@ -23,7 +23,7 @@ module controller_kontroller_out
             buttons_pressed <= buttons;
     end
 
-`define DEBOUNCE_CONSTANT 20
+`define DEBOUNCE_CONSTANT 10
     logic[31:0] counter;
     logic pulse_debounced;
 
@@ -68,7 +68,7 @@ module controller_kontroller_out
                 end
 
                 PULSE_WAIT : begin
-                    if (clk_counter >= 900)begin  // Arbitrary small delay, so we don't change button data_out before it is read
+                    if (clk_counter >= 450)begin  // Arbitrary small delay, so we don't change button data_out before it is read
                         if (button_count > 0)begin
                             button_count <= button_count - 1;
                             state <= PULSE_LOW;

@@ -41,13 +41,14 @@ module top_level(
   logic [31:0] display_data;
 
   logic [15:0] rx_counter;
-  assign led = rx_counter;
+  assign led[7:0] = rx_counter;
+  assign led[15:8] = buttons_down;
 
  logic [7:0] buttons_down;
  assign buttons_down = received_data[7:0];
   
   controller_kontroller_out
-    ( .clk(clk)
+    ( .clk(eth_refclk)
     , .rst(sys_rst)
     , .latch(latch_wire)
     , .pulse(pulse_wire)

@@ -5,21 +5,22 @@
 module ether_tx #(parameter N=2) (
   input wire clk,             // clock @ 25 or 50 mhz
   input wire rst,             // btnc (used for reset)
-  input wire [N-1:0] axiid,   // AXI Input Data
   input wire axiiv,           // AXI Input Valid
   input wire [47:0] my_mac,   // MAC address of this FPGA
   input wire [47:0] dest_mac, // MAC address of destination device
   input wire [15:0] etype,    // Ethernet type
   output logic axiov,         // Transmitting valid data
   output logic [N-1:0] axiod, // Data being transmitted
-  output logic axio_cksum    // Valid when checksum should be calculated
+  output logic axio_cksum,    // Valid when checksum should be calculated
+  output logic axi_last
   );
 
   // NOTE: Transmits in MSB/MSB order, so must route through bitorder before sending
 
-  parameter PRE_COUNT = (64/N)-1;
+  parameter PRE_COUNT = (56/N)-1;
 
   enum {IDLE, SEND_PREAMBLE, SEND_SFD, SEND_DEST_MAC, SEND_SRC_MAC, SEND_TYPE, SEND_DATA, SEND_CRC} state;
+
 
   //local variables
   logic [15:0] ethertype;
@@ -53,8 +54,15 @@ module ether_tx #(parameter N=2) (
           axiov <= 0;
           preamble_count <= 0;
           sfd_count <= 0;
+          axi_last <= 1'b0;
           if (axiiv) begin
             state <= SEND_PREAMBLE;
+            axiov <= 1'b1;
+            if (N==2)begin
+              axiod <= 2'b01;
+            end else begin
+              axiod <= 4'b0101;
+            end
           end
         end
 
@@ -65,11 +73,7 @@ module ether_tx #(parameter N=2) (
           end else begin
             axiod <= 4'b0101;
           end
-          if (N==2 && preamble_count == 28)begin
-            state <= SEND_SFD;
-            preamble_count <= 0;
-          end
-          else if (preamble_count == PRE_COUNT-1) begin
+          if (preamble_count == PRE_COUNT-1) begin
             state <= SEND_SFD;
             preamble_count <= 0;
           end
@@ -96,14 +100,16 @@ module ether_tx #(parameter N=2) (
           if ((N==2) && sfd_count == 2'b11) begin
             state <= SEND_DEST_MAC;
             sfd_count <= 0;
+  //          axio_cksum <= 1'b1;
           end else if ((N==4) && sfd_count == 2'b01) begin
             state <= SEND_DEST_MAC;
             sfd_count <= 0;
+//            axio_cksum <= 1'b1;
           end
         end
 
         SEND_DEST_MAC: begin
-          axio_cksum <= 1;
+          axio_cksum <= 1'b1;
           if (N==2)begin
             axiod <= dest_mac[mac_count -: 2];
             mac_count <= mac_count - 2;
@@ -145,12 +151,14 @@ module ether_tx #(parameter N=2) (
           end
           if (N==2 && type_count == 1) begin
             axiov <= 0;
+            axi_last <= 1'b1;
             // axio_cksum <= 0;
             state <= IDLE;
           end else if (N==4 && type_count == 3) begin
             axiov <= 0;
             // axio_cksum <= 0;
             state <= IDLE;
+            axi_last <= 1'b1;
           end
         end
       endcase
