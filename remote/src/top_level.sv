@@ -5,6 +5,10 @@ module top_level(
   input wire clk, //clock @ 100 mhz
   input wire btnc, //btnc (used for reset)
   input wire btnl,
+
+  input wire data_wire,
+  output logic latch_wire,
+  output logic pulse_wire,
  // input wire btnr,
   output logic eth_refclk,
   input wire [1:0] eth_rxd,
@@ -50,6 +54,28 @@ module top_level(
     .ethclk(eth_refclk)
   );
 
+  logic [7:0] buttons_down;
+  logic [7:0] buttons_down_old;
+
+  always_ff (@posedge clk)begin
+    if (buttons_down != buttons_down_old)begin
+        axiiv_nettx <= 1;
+        axiid_nettx <= buttons_down;
+      end else begin
+        axiiv_nettx <= 0;
+      end
+  end
+
+  controller_controller_in controller_m
+    ( .clk(clk)
+    , .rst(sys_rst)
+    , .data(data_wire)
+    , .latch(latch_wire)
+    , .pulse(pulse_wire)
+    , .axiov(axiov_controller)
+    , .buttons(buttons_down)
+    );
+
   debouncer btnc_db(.clk_in(eth_refclk),
                   .rst_in(sys_rst),
                   .dirty_in(btnl),
@@ -60,13 +86,15 @@ module top_level(
     //              .dirty_in(btnr),
       //            .clean_out(new_right));
 
+  logic axiiv_nettx;
+  logic [15:0] axiid_nettx;
   network_stack_tx #(.N(N), .DATA_SIZE(DATA_SIZE)) da_net_tx(
     .clk(eth_refclk),
     .rst(sys_rst),
     .mac(MY_MAC),
     .dst_mac(48'hFF_FF_FF_FF_FF_FF),
-    .axiiv(test_data_valid_in),
-    .axiid(test_data_in),
+    .axiiv(axiiv_nettx),
+    .axiid(axiid_nettx),
     .dst_ip_in(32'hFF_FF_FF_FF),
     .transport_protocol_in(8'h11),
     .ethertype_in(16'h0800),

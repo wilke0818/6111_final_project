@@ -6,7 +6,7 @@ module controller_kontroller_out
     , input wire rst
     , input wire latch // Latch wire from NES
     , input wire pulse // Pulse wire from NES
-    , input wire axiov
+    , input wire axiiv
     , input wire [7:0] buttons  // One-hot encoding of pressed buttons {A, B, SEL, START, UP, DN, L, R}
     , output logic data   // Data wire into NES
     );
@@ -19,7 +19,7 @@ module controller_kontroller_out
     logic [7:0] buttons_pressed;  // Keep separate buttons_pressed vector in case input isn't valid when we are polled
 
     always_ff @(posedge clk)begin
-        if (axiov)
+        if (axiiv)
             buttons_pressed <= buttons;
     end
 
