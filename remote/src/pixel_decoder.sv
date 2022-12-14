@@ -8,7 +8,7 @@ module pixel_decoder
     , input wire [15:0] axiid
     , output logic axiov
     , output logic [11:0] axiod
-    , output logic [7:0] line_y
+    , output logic [15:0] line_y
     );
 
     enum {IDLE, DATA_IN} state;
@@ -21,15 +21,18 @@ module pixel_decoder
             case (state)
                 IDLE : begin
                     if (axiiv)begin
-                        line_y <= axiid[15:8];
+                        // line_y <= axiid;
+                        axiov <= 1;
+                        axiod <= {axiid[15:12], axiid[10:7], axiid[4:1]};
                         state <= DATA_IN;
-                    end
+                    end else
+                        axiov <= 0;
                 end
 
                 DATA_IN : begin
                     if (axiiv)begin
                         axiov <= 1;
-                        axiod <= axiid[15:4];
+                        axiod <= {axiid[15:12], axiid[10:7], axiid[4:1]};
                     end else begin
                         axiov <= 0;
                         state <= IDLE;
