@@ -11,11 +11,11 @@ module top_level(
   output logic eth_rstn,
   input wire eth_crsdv,
   output logic [1:0] eth_txd,
-  output logic eth_txen
-//  output logic [15:0] led, //just here for the funs
+  output logic eth_txen,
+  output logic [15:0] led, //just here for the funs
 
-//  output logic [7:0] an,
-//  output logic ca,cb,cc,cd,ce,cf,cg
+  output logic [7:0] an,
+  output logic ca,cb,cc,cd,ce,cf,cg
 
   );
 
@@ -29,8 +29,16 @@ module top_level(
   assign eth_rstn = ~sys_rst;
 
   logic [DATA_SIZE-1:0] test_data_in;
-  logic [2:0] test_count;
+  logic [3:0] test_count;
   logic test_data_valid_in, send_button, old_send_button;
+
+  logic received_valid, prev_received_valid;
+  logic [15:0] received_data;
+  logic [31:0] display_data;
+
+  logic [15:0] rx_counter;
+  assign led = rx_counter;
+
   
 //  logic [1599:0] display_out;
 //  logic [20:0] display_count;
@@ -52,11 +60,9 @@ module top_level(
     //              .dirty_in(btnr),
       //            .clean_out(new_right));
 
-  network_stack #(.N(N), .DATA_SIZE(DATA_SIZE)) da_net(
+  network_stack_tx #(.N(N), .DATA_SIZE(DATA_SIZE)) da_net_tx(
     .clk(eth_refclk),
     .rst(sys_rst),
-    .eth_rxd(eth_rxd),
-    .eth_crsdv(eth_crsdv),
     .mac(MY_MAC),
     .dst_mac(48'hFF_FF_FF_FF_FF_FF),
     .axiiv(test_data_valid_in),
@@ -70,13 +76,31 @@ module top_level(
     .eth_txen(eth_txen)
   );
 
+  network_stack_rx #(.N(N), .DATA_SIZE(DATA_SIZE)) da_net_rx(
+    .clk(eth_refclk),
+    .rst(sys_rst),
+    .eth_rxd(eth_rxd),
+    .eth_crsdv(eth_crsdv),
+    .mac(MY_MAC),
+    .dst_mac(48'hFF_FF_FF_FF_FF_FF),
+    .dst_ip_in(32'hFF_FF_FF_FF),
+    .transport_protocol_in(8'h11),
+    .ethertype_in(16'h0800),
+    .udp_src_port_in(16'd42069),
+    .udp_dst_port_in(16'd42069),
+    .axiov(received_valid),
+    .axiod(received_data)
+  );
 
-  // seven_segment_controller mssc(.clk_in(eth_refclk),
-        //                         .rst_in(sys_rst),
-        //                          .val_in(display_out[1599-display_count*4 -: 32]),
-        //                          .cat_out({cg, cf, ce, cd, cc, cb, ca}),
-        //                          .an_out(an));
 
+
+   seven_segment_controller mssc(.clk_in(eth_refclk),
+                                 .rst_in(sys_rst),
+                                  .val_in(display_data),
+                                  .cat_out({cg, cf, ce, cd, cc, cb, ca}),
+                                  .an_out(an));
+
+  logic [11:0] val_count;
 
   // Frame buffer stuff
   // 12x(240x256) BRAM
@@ -95,6 +119,7 @@ module top_level(
   logic [11:0] axiod_pixeldec;
   logic [7:0] line_y_pixeldec;
   logic axiov_frameb;
+
 
 
 
@@ -179,18 +204,13 @@ module top_level(
       test_data_valid_in <= 0;
       test_data_in <= 0;
       test_count <= 0;
-    //  display_out <= 0;
-    //  display_count <= 0;
+      rx_counter <= 0;
+      prev_received_valid <= 0;
+      display_data <= 0;
+      val_count <= 0;
     end else begin
       old_send_button <= send_button;
-    //  old_right <= new_right;
-    //  if (eth_txen) begin
-    //    display_out <= {display_out[1597:0], eth_txd[0], eth_txd[1]};
-    //  end
-
-    //  if (~old_right && new_right) begin
-    //    display_count <= display_count + 1;
-    //  end
+      prev_received_valid <= received_valid;
 
       if (~old_send_button && send_button) begin
         test_data_valid_in <= 1'b1;
@@ -198,25 +218,40 @@ module top_level(
         test_count <= 1;
       end
 
-      if (test_count == 1) begin
-        test_count <= 2;
+      if (~prev_received_valid && received_valid) begin
+        rx_counter <= rx_counter + 1;
+//        display_data <= {'b0, received_data};
+      end
+
+      if (received_valid) begin
+        val_count <= val_count + 1;
+      end else begin
+        if (prev_received_valid) val_count <= 0;
+      end
+
+      if (received_valid && (val_count == 12 || val_count == 13)) display_data <= {display_data[15:0], received_data};
+
+      if (test_count == 1 || test_count == 8) begin
+        test_count <= test_count + 1;
         test_data_in <= 16'h6969;
-      end else if (test_count == 2) begin
-        test_count <= 3;
+      end else if (test_count == 2 || test_count == 9) begin
+        test_count <= test_count + 1;
         test_data_in <= 16'hFFFF;
-      end else if (test_count == 3) begin
-        test_count <= 4;
+      end else if (test_count == 3 || test_count == 10) begin
+        test_count <= test_count + 1;
         test_data_in <= 16'h0420;
-      end else if (test_count == 4) begin
-        test_count <= 5;
+      end else if (test_count == 4 || test_count == 11) begin
+        test_count <= test_count + 1;
         test_data_in <= 16'hABCD;
-      end else if (test_count == 5) begin
-        test_count <= 6;
+      end else if (test_count == 5 || test_count == 12) begin
+        test_count <= test_count + 1;
         test_data_in <= 16'h6969;
-      end else if (test_count == 6) begin
-        test_count <= 7;
+      end else if (test_count == 6 || test_count == 13) begin
+        test_count <= test_count + 1;
         test_data_in <= 16'hFFFF;
-      end else if (test_count == 7) begin
+      end else if (test_count == 7  || test_count == 14) begin
+        test_count <= test_count + 1;
+      end else if (test_count ==15) begin
         test_count <= 0;
         test_data_valid_in <= 0;
       end
