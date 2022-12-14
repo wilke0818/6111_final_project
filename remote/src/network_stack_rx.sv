@@ -104,8 +104,10 @@ module network_stack_rx #(parameter N=2, parameter DATA_SIZE=16) (
     if (rst) begin
       read_out = 0;
     end else begin
-      if (~prev_rx_done && rx_done) begin
-        read_out = ~udp_kill && ~rx_kill;
+      if (~prev_rx_done && rx_done && ordered_eth_crsdv && network_rx_axiov) begin
+        if (transport_axiov) read_out = ~udp_kill && ~rx_kill;
+        else if (ethernet_axiod) read_out = ~rx_kill;
+        else read_out = 0;
       end else if (prev_axiov && ~axiov) begin
         read_out = 0;
       end else begin
