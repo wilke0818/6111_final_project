@@ -15,6 +15,7 @@ module data_store_rx_tb;
   logic [3:0] axiid4;
   logic [15:0] axiod4;
   logic read_out;
+  logic [15:0] large_data;
 
   data_store_rx #(.N(4)) data_in(
     .clk(clk_in),
@@ -108,6 +109,18 @@ module data_store_rx_tb;
     #40;
     axiid4 = 4'h0;
     #40;
+
+    for (int i = 0; i < 200; i=i+1) begin
+      large_data = i;
+      axiid4 = large_data[15:12];
+      #40;
+      axiid4 = large_data[11:8];
+      #40;
+      axiid4 = large_data[7:4];
+      #40;
+      axiid4 = large_data[3:0];
+      #40;
+    end
     
     $display("Expected axiov: 0, expected axiod: 0, actual axiov: %b, actual axiod: %h", axiov4, axiod4);
     //wait for ethernet header to read through
@@ -140,7 +153,11 @@ module data_store_rx_tb;
     #40;
     $display("Expected axiov: 1, expected axiod: 0x8180, actual axiov: %b, actual axiod: %h", axiov4, axiod4);
     #40;
-    
+
+    for (int i = 0; i < 200; i=i+1) begin
+      $display("Expected axiov: 1, expected axiod: %h, actual axiov: %b, actual axiod: %h",i, axiov4, axiod4);
+      #40;
+    end    
     $display("Expected axiov: 0, actual axiov: %b, actual axiod: %h", axiov4, axiod4);
     #40;
     $display("Expected axiov: 0, actual axiov: %b, actual axiod: %h", axiov4, axiod4);
