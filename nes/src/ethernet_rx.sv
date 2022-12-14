@@ -52,7 +52,7 @@ module ethernet_rx #(parameter N=2) (
     .axiod(ethertype)
   );
 
-  cksum4bit cksummod(
+  cksum cksummod(
     .clk(clk),
     .rst(rst),
     .axiid(ether_axiod),
