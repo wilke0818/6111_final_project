@@ -12,8 +12,8 @@ module controller_controller_in
     );
 
     enum {WAIT_FOR_LATCH, SEND_LATCH, PULSE_LOW, PULSE_HIGH} state;
-    logic [15:0] clk_counter = 0;
-    logic [15:0] clk_us_counter = 0;
+    logic [$clog2(800000)-1:0] clk_counter = 0;
+    logic [$clog2(800000)-1:0] clk_us_counter = 0;
 
     logic [3:0] button_count = 0;
 
@@ -30,7 +30,7 @@ module controller_controller_in
         end else begin
             case (state)
                 WAIT_FOR_LATCH : begin
-                    if(clk_counter >= 16000)begin   // 60Hz clock
+                    if(clk_counter >= 800000)begin   // 60Hz clock
                         axiov <= 0;
                         latch <= 1;
                         state <= SEND_LATCH;
@@ -43,7 +43,7 @@ module controller_controller_in
                 end
                 
                 SEND_LATCH : begin
-                    if (clk_us_counter >= 1200)begin    // 12us clock
+                    if (clk_us_counter >= 600)begin    // 12us clock
                         latch <= 0;
                         state <= PULSE_LOW;
                         clk_us_counter <= 0;
@@ -52,7 +52,7 @@ module controller_controller_in
                 end
 
                 PULSE_LOW : begin
-                    if (clk_us_counter >= 600)begin     // 6us wait period
+                    if (clk_us_counter >= 300)begin     // 6us wait period
                         pulse <= 0;
                         state <= PULSE_HIGH;
                         clk_us_counter <= 0;
@@ -63,7 +63,7 @@ module controller_controller_in
                 end
 
                 PULSE_HIGH : begin
-                    if (clk_us_counter >= 600)begin     // 6us wait period
+                    if (clk_us_counter >= 300)begin     // 6us wait period
                         clk_us_counter <= 0;
                         pulse <= 1;
                         if (button_count >= 8) begin
@@ -76,7 +76,7 @@ module controller_controller_in
                         clk_us_counter <= clk_us_counter + 1;
                 end
             endcase
-            if (clk_counter < 16000)
+            if (clk_counter < 800000)
                 clk_counter <= clk_counter + 1;
         end
     end

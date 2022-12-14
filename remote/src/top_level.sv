@@ -41,8 +41,10 @@ module top_level(
   logic [31:0] display_data;
 
   logic [15:0] rx_counter;
-  assign led = rx_counter;
+  assign led[7:0] = rx_counter[7:0];
+  assign led[15:8] = buttons_down;
 
+  logic axiov_controller;
   
 //  logic [1599:0] display_out;
 //  logic [20:0] display_count;
@@ -57,17 +59,27 @@ module top_level(
   logic [7:0] buttons_down;
   logic [7:0] buttons_down_old;
 
-  always_ff (@posedge clk)begin
-    if (buttons_down != buttons_down_old)begin
-        axiiv_nettx <= 1;
-        axiid_nettx <= buttons_down;
-      end else begin
-        axiiv_nettx <= 0;
+  always_ff @(posedge eth_refclk)begin
+    if (sys_rst) begin
+      buttons_down_old <= 0;
+      axiiv_nettx <= 0;
+      axiid_nettx <= 0;
+    end else begin
+      if (axiov_controller) begin
+        buttons_down_old <= buttons_down;
+    
+        if (buttons_down != buttons_down_old)begin
+          axiiv_nettx <= 1;
+          axiid_nettx <= {buttons_down,buttons_down};
+        end else begin
+          axiiv_nettx <= 0;
+        end
       end
+    end
   end
 
   controller_controller_in controller_m
-    ( .clk(clk)
+    ( .clk(eth_refclk)
     , .rst(sys_rst)
     , .data(data_wire)
     , .latch(latch_wire)
