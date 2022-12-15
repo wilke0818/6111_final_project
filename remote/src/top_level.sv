@@ -80,6 +80,8 @@ module top_level(
           axiiv_nettx <= 1;
           axiid_nettx <= {buttons_down,buttons_down};
           pad_count <= 0;
+          send_count <= 0;
+          axi_count <= 0;
         end else begin
           if (pad_count < 50) begin
             pad_count <= pad_count + 1;
@@ -95,8 +97,9 @@ module top_level(
         end
       end else begin
         axiiv_nettx <= 0;
-        axi_count <= 0;
-        send_count <= 0;
+       // axi_count <= 0;
+       // send_count <= 0;
+       // pad_count <= 0;
       end
     end
   end
