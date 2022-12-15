@@ -85,7 +85,7 @@ module top_level(
         end else begin
           if (pad_count < 50) begin
             pad_count <= pad_count + 1;
-            send_count <= 0;
+//            send_count <= 0;
           end else if (eth_txen) begin
             axiiv_nettx <= 0;
           end else if (axi_count < 50) begin
