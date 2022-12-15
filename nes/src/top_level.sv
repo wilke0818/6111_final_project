@@ -72,6 +72,8 @@ module top_level(
           
         end
       end else begin
+        m_count <= 0;
+        m_val <= 0;
         if (old_received_valid) buttons_down <= m_val;
       end
     end
