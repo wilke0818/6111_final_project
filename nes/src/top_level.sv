@@ -45,17 +45,34 @@ module top_level(
   assign led[15:8] = buttons_down;
 
   logic [7:0] buttons_down;
+  logic [7:0] m_val;
+  logic [15:0] m_count;
   logic old_received_valid;
   // assign buttons_down = received_data[7:0];
 
   always_ff @(posedge eth_refclk)begin
     if (sys_rst)begin
       buttons_down <= 8'b0;
+      m_count <= 0;
+      m_val <= 0;
     end else begin
       old_received_valid <= received_valid;
-      if (received_valid && ~old_received_valid)begin
-        if (received_data[15:8] == received_data[7:0])
-          buttons_down <= received_data[15:8];
+      if (received_valid)begin
+        if (received_data[15:8] == received_data[7:0]) begin
+          if (m_count == 0) begin
+            m_val <= received_data[15:8];
+            m_count <= 'b1;
+          end else begin
+            if (received_data[15:8] == m_val) begin
+              m_count <= m_count + 1;
+            end else begin
+              m_count <= m_count - 1;
+            end
+          end
+          
+        end
+      end else begin
+        if (old_received_valid) buttons_down <= m_val;
       end
     end
   end
