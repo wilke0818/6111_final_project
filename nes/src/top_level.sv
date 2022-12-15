@@ -44,8 +44,20 @@ module top_level(
   assign led[7:0] = rx_counter;
   assign led[15:8] = buttons_down;
 
- logic [7:0] buttons_down;
- assign buttons_down = received_data[7:0];
+  logic [7:0] buttons_down;
+  logic old_received_valid;
+  // assign buttons_down = received_data[7:0];
+
+  always_ff @(posedge eth_refclk)begin
+    if (sys_rst)begin
+      buttons_down <= 8'b0;
+    end else begin
+      old_received_valid <= received_valid;
+      if (received_valid && ~old_received_valid)begin
+        buttons_down <= received_data[15:8];
+      end
+    end
+  end
   
   controller_kontroller_out
     ( .clk(eth_refclk)
