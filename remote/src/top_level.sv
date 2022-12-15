@@ -58,12 +58,16 @@ module top_level(
 
   logic [7:0] buttons_down;
   logic [7:0] buttons_down_old;
+  logic prev_axiov_controller;
 
+  logic [7:0] axi_count;
   always_ff @(posedge eth_refclk)begin
     if (sys_rst) begin
       buttons_down_old <= 0;
       axiiv_nettx <= 0;
       axiid_nettx <= 0;
+      prev_axiov_controller <= 0;
+      axi_count <= 0;
     end else begin
       if (axiov_controller) begin
         buttons_down_old <= buttons_down;
@@ -72,8 +76,13 @@ module top_level(
           axiiv_nettx <= 1;
           axiid_nettx <= {buttons_down,buttons_down};
         end else begin
-          axiiv_nettx <= 0;
+          if (axi_count < 32) begin
+            axi_count <= axi_count + 1;
+          end else axiiv_nettx <= 0;
         end
+      end else begin
+        axiiv_nettx <= 0;
+        axi_count <= 0;
       end
     end
   end
