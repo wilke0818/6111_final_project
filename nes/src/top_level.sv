@@ -57,25 +57,10 @@ module top_level(
       m_val <= 0;
     end else begin
       old_received_valid <= received_valid;
-      if (received_valid)begin
-        if (received_data[15:8] == received_data[7:0]) begin
-          if (m_count == 0) begin
-            m_val <= received_data[15:8];
-            m_count <= 'b1;
-          end else begin
-            if (received_data[15:8] == m_val) begin
-              m_count <= m_count + 1;
-            end else begin
-              m_count <= m_count - 1;
-            end
-          end
-          
-        end
-      end else begin
-        m_count <= 0;
-        m_val <= 0;
-        if (old_received_valid) buttons_down <= m_val;
-      end
+      if (received_valid && ~old_received_valid)begin
+        if (received_data[15:8] == received_data[7:0])
+          buttons_down <= received_data[15:8];
+      end 
     end
   end
   
