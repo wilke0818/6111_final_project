@@ -54,7 +54,8 @@ module top_level(
     end else begin
       old_received_valid <= received_valid;
       if (received_valid && ~old_received_valid)begin
-        buttons_down <= received_data[15:8];
+        if (received_data[15:8] == received_data[7:0])
+          buttons_down <= received_data[15:8];
       end
     end
   end
